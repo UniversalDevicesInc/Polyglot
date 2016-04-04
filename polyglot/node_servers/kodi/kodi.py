@@ -14,7 +14,7 @@ def id_2_addr(udn):
 
 
 class KodiNodeServer(SimpleNodeServer):
-    """ Phillips Hue Node Server """
+    """ Kodi Node Server """
 
     def setup(self):
         """ Initial node setup. """
@@ -31,7 +31,7 @@ class KodiNodeServer(SimpleNodeServer):
         lnode = self.get_node(isy_addr)
         if not lnode:
             manifest = self.config.get('manifest', {})
-            Kodi(self, isy_addr, name, ip_addr, self, manifest)
+            Kodi(self, isy_addr, name, ip_addr, self.get_node('disco'), manifest)
 
         else:
             self.nodes[isy_addr].set_ip(ip_addr)
