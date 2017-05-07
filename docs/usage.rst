@@ -82,13 +82,13 @@ Make the file executable. Use the filename you downloaded. Example is the ARM ve
 
 .. code-block:: bash
 
-	chmod 755 polyglot.linux-arm7l.pyz
+	chmod 755 polyglot.linux.arm7l.pyz
 
 Run Polyglot!
 
 .. code-block:: bash
 
-	./polyglot.linux-arm7l.pyz -v
+	./polyglot.linux.arm7l.pyz -v
 
 Command line flags
 ------------------
