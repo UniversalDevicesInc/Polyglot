@@ -30,7 +30,7 @@ import xml.etree.ElementTree as ET
 YAML = True
 try:
     import yaml
-except ImportError as e:
+except ImportError:
     YAML = False
 
 # Increment this version number each time a breaking change is made to
@@ -76,7 +76,7 @@ class Node(object):
     :param str address: The address of the node in the ISY without the node
                         server ID prefix
     :param str name: The name of the node
-    :param primary: The primary node for the device this node belongs to, 
+    :param primary: The primary node for the device this node belongs to,
                         or True if it's the primary.
     :type primary: polyglot.nodeserver_api.Node or True if this node is the primary.
     :param manifest: The node manifest saved by the node server
@@ -96,7 +96,7 @@ class Node(object):
         self._drivers = copy.deepcopy(self._drivers)
         manifest = manifest.get(address, {}) if manifest else {}
         new_node = manifest == {}
-        if not hasattr(parent,'_is_node_server'):
+        if not hasattr(parent, '_is_node_server'):
             raise RuntimeError('Error: node "%s", parent "%s" is not a NodeServer.'
                                % (name, parent))
         self.added = manifest.get('added', False)
@@ -114,13 +114,13 @@ class Node(object):
         self.add_node()
 
 
-    def smsg(self, str):
+    def smsg(self, strng):
         """
         Logs/sends a diagnostic/debug, informative, or error message.
         Individual node servers can override this method if they desire to
         redirect or filter these messages.
         """
-        self.parent.smsg(str)
+        self.parent.smsg(strng)
 
     def run_cmd(self, command, **kwargs):
         """
@@ -251,7 +251,7 @@ class Node(object):
             self.smsg(
                 '**ERROR: name too long (>14), will fail when adding on ISY): "{}"'
                 .format(self.address))
-        self.smsg('**DEBUG: node "%s": parent="%s"' % (self.name,self.parent))
+        self.smsg('**DEBUG: node "%s": parent="%s"' % (self.name, self.parent))
         self.parent.add_node(self)
         self.report_driver()
         return True
@@ -451,19 +451,19 @@ class NodeServer(object):
 
     def setup(self):
         """
-        Setup the node server.  All node servers must override this method and 
+        Setup the node server.  All node servers must override this method and
         call it thru super.
         Currently it only sets up the reference for the logger.
         """
         self.logger = self.poly.logger
-        
-    def smsg(self, str):
+
+    def smsg(self, strng):
         """
         Logs/sends a diagnostic/debug, informative, or error message.
         Individual node servers can override this method if they desire to
         redirect or filter these messages.
         """
-        self.poly.send_error(str)
+        self.poly.send_error(strng)
 
     def on_config(self, **data):
         """
@@ -688,7 +688,7 @@ class NodeServer(object):
         """ Called every longpoll seconds for less important polling. """
         # pylint: disable=no-self-use
         pass
-        
+
     def run(self):
         """
         Run the Node Server. Exit when triggered. Generally, this method should
@@ -742,7 +742,7 @@ class SimpleNodeServer(NodeServer):
     nodes = OrderedDict()
     """
     Nodes registered with this node server.  All nodes are automatically added
-    by the add_node method.  The keys are the node IDs while the values are 
+    by the add_node method.  The keys are the node IDs while the values are
     instances of :class:`polyglot.nodeserver_api.Node`. Classes inheriting
     can access this directly, but the prefered method is by using get_node or
     exist_node methods.
@@ -892,13 +892,13 @@ class SimpleNodeServer(NodeServer):
             self.smsg('**WARNING: probe: node name mismatch, local: "{}" ISY: "{}"'
                       .format(node.name, n_name))
             self.smsg('**WARNING: probe: correcting local node name')
-            node.name = n_name;
+            node.name = n_name
 
         if node.enabled != n_enabled:
             self.smsg('**WARNING: probe: node enable mismatch, local:"{}" ISY:"{}"'
                       .format(node.enabled, n_enabled))
             self.smsg('**WARNING: probe: correcting local node state')
-            node.enabled = n_enabled;
+            node.enabled = n_enabled
 
         return True
 
@@ -1169,15 +1169,15 @@ class PolyglotConnector(object):
                 'removed', 'renamed', 'enabled', 'disabled', 'cmd', 'ping',
                 'exit', 'params', 'result', 'statistics']
     """ Commands that may be invoked by Polyglot """
-    logger = None                
-    """ 
+    logger = None
+    """
     logger is initialized after the node server wait_for_config completes
     by the setup_log method and the log file is located in the node servers
     sandbox.
     Once wait_for_config is complete, you can call
     `poly.logger.info('This variable is set to %s', variable)`
     """
-       
+
     def __init__(self):
         # make singleton
         # pylint: disable=global-statement
@@ -1265,8 +1265,8 @@ class PolyglotConnector(object):
         Disconnects from Polyglot. Blocks the thread until IO stream is clear
         """
         if self.connected:
-            self._outq.locked = True
-            self._errq.locked = True
+            #self._outq.locked = True
+            #self._errq.locked = True
             self._outq.join()
             self._errq.join()
             self._threads = {}
@@ -1274,42 +1274,48 @@ class PolyglotConnector(object):
     def wait_for_config(self):
         """ Blocks the thread until the configuration is received """
         while not self._got_config:
-            time.sleep(1)
+            time.sleep(.5)
         self.logger = self.setup_log(self.sandbox, self.name)
         self._read_nodeserver_config()
 
     def _read_nodeserver_config(self):
-        """ 
-        Reads custom config file and presents it to node server as nodeserver_config 
+        """
+        Reads custom config file and presents it to node server as nodeserver_config
         """
         if YAML:
-            if self.configfile == None: 
-                self.smsg('**INFO: No custom "configfile" found in server.json. Trying the default of config.yaml.')
+            if self.configfile == None:
+                self.smsg('**INFO: No custom "configfile" found in server.json. \
+                    Trying the default of config.yaml.')
                 self.configfile = 'config.yaml'
             else:
-                self.smsg('**INFO: Custom config file option found in server.json: {}'.format(self.configfile))
+                self.smsg('**INFO: Custom config file option found in server.json: \
+                    {}'.format(self.configfile))
             try:
                 with open(os.path.join(self.path, self.configfile), 'r') as cfg:
                     self.nodeserver_config = yaml.safe_load(cfg)
-                    self.smsg('**INFO: {} - Config file loaded as dictionary to "poly.nodeserver_config"'.format(self.configfile))
+                    self.smsg('**INFO: {} - Config file loaded as dictionary to \
+                        "poly.nodeserver_config"'.format(self.configfile))
             except yaml.YAMLError, exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
-                    self.smsg('**ERROR: Error in config file. Position: (Line: {}: Column: {})'.format(mark.line+1, mark.column+1))
+                    self.smsg('**ERROR: Error in config file. Position: (Line: \
+                        {}: Column: {})'.format(mark.line+1, mark.column+1))
                     self.smsg('{} - '.format(exc))
             except IOError as e:
-                self.smsg('**INFO: No config file found, or it is unreadable. This is normal if your nodeserver doesn\'t need a config file.')
-        else: self.smsg('**ERROR: PyYAML module not installed... skipping custom config sections. "sudo pip install pyyaml" to use')
+                self.smsg('**INFO: No config file found, or it is unreadable. This is normal \
+                    if your nodeserver doesn\'t need a config file.')
+        else: self.smsg('**ERROR: PyYAML module not installed... skipping custom config sections. \
+            "sudo pip install pyyaml" to use')
 
     def write_nodeserver_config(self, default_flow_style=False, indent=4):
         """
-        Writes any changes to the nodeserver custom configuration file. 
+        Writes any changes to the nodeserver custom configuration file.
         self.nodeserver_config should be a dictionary. Refrain from calling
         this in a poll of any kind. Typically you won't even have to write this
-        unless you are storing custom data you want retrieved on the next 
-        run. Saved automatically during normal Polyglot shutdown. Returns 
+        unless you are storing custom data you want retrieved on the next
+        run. Saved automatically during normal Polyglot shutdown. Returns
         True for success, False for failure.
-        
+
         :param boolean default_flow_style: YAML's default flow style formatting. Default False
         :param int indent: Override the default indent spaces for YAML. Default 4
         """
@@ -1317,8 +1323,9 @@ class PolyglotConnector(object):
             try:
                 with open(os.path.join(self.path, self.configfile), 'r') as read:
                     existing = yaml.safe_load(read)
-                    if existing == self.nodeserver_config: 
-                        self.smsg('**INFO: NodeServer configuration file matches running config... Skipping write.')
+                    if existing == self.nodeserver_config:
+                        self.smsg('**INFO: NodeServer configuration file matches running \
+                            config... Skipping write.')
                         return True
             except yaml.YAMLError as e:
                 # the saved config file is bad, report the error and fix it
@@ -1346,7 +1353,6 @@ class PolyglotConnector(object):
         else: self.smsg('**ERROR: PyYAML module not installed... skipping custom config sections. "sudo pip install pyyaml" to use')
         return True
 
-
     # manage output
     def _send_out(self):
         """ Send output through pipe """
@@ -1359,6 +1365,7 @@ class PolyglotConnector(object):
                 sys.stdout.write('{}\n'.format(line))
                 self._outq.task_done()
                 sys.stdout.flush()
+            time.sleep(.1)
 
     def _send_err(self):
         """ Send error through pipe """
@@ -1371,6 +1378,7 @@ class PolyglotConnector(object):
                 sys.stderr.write('{}\n'.format(line))
                 self._errq.task_done()
                 sys.stderr.flush()
+            time.sleep(.1)
 
     # manage input
     def _parse_cmd(self, cmd):
@@ -1402,6 +1410,7 @@ class PolyglotConnector(object):
                 self.send_error('Received invalid command: {}'.format(cmd))
                 return False
 
+            time.sleep(.1)
             # execute command
             return self._recv(cmd_code, args)
 
@@ -1471,7 +1480,7 @@ class PolyglotConnector(object):
         # Attach the handler to the logger
         logger.addHandler(handler)
         return logger
-       
+
     # create output
     def _mk_cmd(self, cmd_code, **kwargs):
         """
@@ -1490,7 +1499,7 @@ class PolyglotConnector(object):
         :param str err_str: Error text to be sent to Polyglot log
         """
         self._errq.put(err_str.replace('\n', ''), True, 5)
-        
+
     def smsg(self, str):
         """
         Logs/sends a diagnostic/debug, informative, or error message.
@@ -1685,7 +1694,7 @@ class PolyglotConnector(object):
         # pylint: disable=unused-argument
         self._mk_cmd('pong')
         return True
-        
+
     def request_stats(self, *args, **kwargs):
         """
         Sends a command to Polyglot to request a statistics message.
