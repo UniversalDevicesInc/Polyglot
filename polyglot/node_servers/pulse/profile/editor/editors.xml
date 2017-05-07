@@ -1,0 +1,36 @@
+<!-- Version 0.0.4 -->
+<editors>
+
+  <!-- Raw integer (e.g. time-since-epoch) value -->
+  <editor id="PULSE_T">
+    <!-- 56 is "raw value" -->
+    <range uom="56" min="0" max="2147483647" step="1" prec="0" />
+  </editor>
+
+  <!-- Simple integer value from 0 to 255 -->
+  <editor id="PULSE_INT8">
+    <!-- 56 is "raw value" -->
+    <range uom="56" min="0" max="255" step="1" prec="0" />
+  </editor>
+
+  <!-- Brightness type of field -->
+  <editor id="PULSE_PCT">
+    <range uom="51" min="0" max="100" prec="0" />
+  </editor>
+  
+  <!-- On/Off field -->
+  <editor id="PULSE_ONOFF">
+    <range uom="2" subset="0,1" />
+  </editor>
+
+  <!-- On/Off/Fail field -->
+  <editor id="PULSE_OOF">
+    <range uom="25" subset="1-3" nls="PLS_OOF" />
+  </editor>
+
+  <!-- Idle/Pass/Fail field -->
+  <editor id="PULSE_UPF">
+    <range uom="25" subset="1-3" nls="PLS_UPF" />
+  </editor>
+
+</editors>

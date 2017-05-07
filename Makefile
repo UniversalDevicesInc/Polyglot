@@ -8,12 +8,16 @@ BIN_DIR="/usr/local/bin"
 DAEMON_USER="polyglot"
 OS_NAME=$(shell uname)
 PROC_NAME=$(shell uname -m)
+PYTHON_LOCATION=$(shell which python)
 
 ifeq ($(OS_NAME),Linux)
 	BUILD_TYPE = .linux.$(PROC_NAME)
 endif
 ifeq ($(OS_NAME),Darwin)
 	BUILD_TYPE = .osx.$(PROC_NAME)
+endif
+ifeq ($(OS_NAME),FreeBSD)
+	BUILD_TYPE = .freebsd.$(PROC_NAME)
 endif
 
 
@@ -56,7 +60,7 @@ build: polyglot
 	mkdir -p bin
 	mv build/polyglot/__main__.py build/
 	cd build; zip -r polyglot.zip *
-	echo "#!/usr/bin/python" > build/shebang
+	echo "#!$(PYTHON_LOCATION)" > build/shebang
 	cat build/shebang build/polyglot.zip > bin/polyglot$(BUILD_TYPE).pyz
 	chmod +x bin/polyglot$(BUILD_TYPE).pyz
 

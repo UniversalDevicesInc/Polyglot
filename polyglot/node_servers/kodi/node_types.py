@@ -90,6 +90,7 @@ class Kodi(Node):
         self.ip_addr = None
         self.server = None
         self.set_ip(ip_addr)
+        self._last_err = False
 
     def set_ip(self, ip_addr):
         """ Update the IP Address """
@@ -130,10 +131,13 @@ class Kodi(Node):
         try:
             players = self.server.Player.GetActivePlayers()
         except jsonrpc_requests.TransportError as err:
-            self.parent.poly.send_error('Could not contact Kodi {}'
-                                        .format(self.ip_addr))
-            self.parent.poly.send_error(repr(err))
+            if not self._last_err:
+                self.parent.poly.send_error('Could not contact Kodi {}'
+                                            .format(self.ip_addr))
+                self.parent.poly.send_error(repr(err))
+                self._last_err = True
             return None
+        self._last_err = False
         return players
 
     def _play_pause(self, play_pause):
@@ -198,3 +202,5 @@ class Kodi(Node):
     _commands = {'PLAY': _play, 'PAUSE': _pause, 'STOP': _stop, 'PREV': _prev,
                  'NEXT': _next, 'ST': _st}
     node_def_id = 'KODI'
+
+    _last_err = False

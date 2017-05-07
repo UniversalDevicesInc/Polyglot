@@ -1,0 +1,9 @@
+{
+    "name": "Pulse",
+    "docs": "https://github.com/UniversalDevicesInc/Polyglot",
+    "type": "python",
+    "executable": "pulse.py",
+    "description": "Adds Hearbeat and Diagnostics for Polyglot to the ISY944.",
+    "notice": "",
+    "credits": []
+}

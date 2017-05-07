@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Usage &mdash; Polyglot 0.0.6 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Polyglot 0.0.6 documentation" href="index.html"/>
+        <link rel="next" title="Node Server Development" href="nsdev.html"/>
+        <link rel="prev" title="Polyglot Virtual Node Server Framework" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Polyglot
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pure-python-aka-non-compiled-source">Pure Python (aka non-compiled source)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compiled-version-aka-all-in-one">COMPILED version (aka all-in-one)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-line-flags">Command line flags</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#osx-instructions">OSX Instructions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#start-polyglot-on-boot">Start Polyglot on Boot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logging-locations">Logging locations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#user-interface">User Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#settings">Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adding-node-server">Adding Node Server</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#managing-node-servers">Managing Node Servers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#viewing-polyglot-log">Viewing Polyglot Log</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nsdev.html">Node Server Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsexample.html">Python Node Server Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsapi.html">Polyglot Node Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module.html">Polyglot Methods and Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optional.html">Optional Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Polyglot</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Usage</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/usage.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Polyglot is open source software provided under the MIT license.
+There are two ways to install Polyglot. Either a binary compiled version
+or the pure python (from source) version.</p>
+<p><strong>Version 0.0.4 Released May 30th, 2016</strong></p>
+<p>These methods are for linux debian x86 or raspbian on a rpi.</p>
+<p>Get the system pre-requisites:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>apt-get install python-git python-pip python3-pip libjpeg-dev
+</pre></div>
+</div>
+<div class="section" id="pure-python-aka-non-compiled-source">
+<h3>Pure Python (aka non-compiled source)<a class="headerlink" href="#pure-python-aka-non-compiled-source" title="Permalink to this headline">¶</a></h3>
+<p>Clone the repository to a directory under the user you wish to run Polyglot. This will not run as root.
+eg. /home/pi/ the following line will create a directory called Polyglot so no need to do that.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>git clone https://github.com/UniversalDevicesInc/Polyglot.git
+</pre></div>
+</div>
+<p>Move yourself into the Polyglot directory</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> Polyglot
+</pre></div>
+</div>
+<p>Install the Python required modules this does require root as we want to install them globally
+for Python to access.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo pip install -r requirements.txt
+</pre></div>
+</div>
+<p>Run Polyglot!</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python -m polyglot -v
+</pre></div>
+</div>
+<p>This will launch Polyglot and create a directory titled <em>config</em> in the current
+directory. Polyglot will store all of its configuration and its log inside of
+this directory. You may specify a manual path for this directory using the
+command line flags.</p>
+</div>
+<div class="section" id="compiled-version-aka-all-in-one">
+<h3>COMPILED version (aka all-in-one)<a class="headerlink" href="#compiled-version-aka-all-in-one" title="Permalink to this headline">¶</a></h3>
+<p>We will need to create a home for Polyglot</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir Polyglot <span class="o">&amp;&amp;</span> <span class="nb">cd</span> <span class="nv">$_</span>
+</pre></div>
+</div>
+<p>We still need the python pre-requisites:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo pip install -r https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/requirements.txt
+</pre></div>
+</div>
+<p>Download the polyglot binary for your system. One of these:</p>
+<p>For ARM (Raspberry Pi&#8217;s)
+&lt;<a class="reference external" href="https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/polyglot.linux.armv7l.pyz">https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/polyglot.linux.armv7l.pyz</a>&gt;</p>
+<p>For x86 Linux flavors (Built with Debian sid):
+&lt;<a class="reference external" href="https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/polyglot.linux.x86_64.pyz">https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/polyglot.linux.x86_64.pyz</a>&gt;</p>
+<p>For MAC (Built on Yosemite)
+&lt;<a class="reference external" href="https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/polyglot.osx.x86_64.pyz">https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/polyglot.osx.x86_64.pyz</a>&gt;</p>
+<p>Make the file executable. Use the filename you downloaded. Example is the ARM version.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>chmod <span class="m">755</span> polyglot.linux-arm7l.pyz
+</pre></div>
+</div>
+<p>Run Polyglot!</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>./polyglot.linux-arm7l.pyz -v
+</pre></div>
+</div>
+</div>
+<div class="section" id="command-line-flags">
+<h3>Command line flags<a class="headerlink" href="#command-line-flags" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>-h, --help            show this <span class="nb">help</span> message and <span class="nb">exit</span>
+-c CONFIG_DIR, --config CONFIG_DIR
+                      Polyglot configuration directory
+-v, --verbose         Enable verbose logging
+-vv                   Enable very verbose logging
+</pre></div>
+</div>
+<p>While running in its default mode, Polyglot will log all warnings and errors.
+Verbose logging will include info messages. Very verbose mode adds debug
+messages that could be useful when developing a new node server.</p>
+</div>
+<div class="section" id="osx-instructions">
+<h3>OSX Instructions<a class="headerlink" href="#osx-instructions" title="Permalink to this headline">¶</a></h3>
+<p>Install XCODE Developer Tools (enables git)
+The easiest way to do this is to go to the console and type:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>git
+</pre></div>
+</div>
+<p>This will automatically launch the XCODE installer.</p>
+<p>Once XCODE is installed run:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo easy_install pip
+</pre></div>
+</div>
+<p>This installs pip 8.1.1 and now we are ready to get our binary or clone the github repository as
+instructed above.</p>
+</div>
+<div class="section" id="start-polyglot-on-boot">
+<h3>Start Polyglot on Boot<a class="headerlink" href="#start-polyglot-on-boot" title="Permalink to this headline">¶</a></h3>
+<p>If you are running the module you already have the polyglot.service file in your Polyglot root folder.
+If not then get it like so:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>wget https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/polyglot.service
+</pre></div>
+</div>
+<p>Edit the file polyglot.service with your favorite editor.
+Modify WorkingDirectory to be your root Polyglot directory. eg. /home/pi/Polyglot</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">WorkingDirectory</span><span class="o">=</span>/home/pi/Polyglot
+</pre></div>
+</div>
+<p>Modify ExecStart to be how you start it. Full path needed.
+For pure Python(Non-compiled):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ExecStart</span><span class="o">=</span>/usr/bin/python -m polyglot -v
+</pre></div>
+</div>
+<p>For the compiled binary:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ExecStart</span><span class="o">=</span>/home/pi/Polyglot/polyglot.linux-arm7l.pyz -v
+</pre></div>
+</div>
+<p>Change the user to the user account that will run polyglot (NOT ROOT)</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">User</span><span class="o">=</span>pi
+</pre></div>
+</div>
+<p>Copy polyglot.service to /lib/systemd/system/ You need sudo as /lib/systemd/system is a system directory.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo cp /home/pi/Polyglot/polyglot.service /lib/systemd/system/
+</pre></div>
+</div>
+<p>Enable systemctl (Make sure polyglot isn&#8217;t already running):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo systemctl <span class="nb">enable</span> polyglot
+sudo systemctl start polyglot
+</pre></div>
+</div>
+</div>
+<div class="section" id="logging-locations">
+<h3>Logging locations<a class="headerlink" href="#logging-locations" title="Permalink to this headline">¶</a></h3>
+<p>Log file is found at config/polyglot.log. To watch the live action:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>tail -fn <span class="m">50</span> /home/pi/Polyglot/config/polyglot.log
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="user-interface">
+<h2>User Interface<a class="headerlink" href="#user-interface" title="Permalink to this headline">¶</a></h2>
+<p>Once Polyglot is running, the user interface may be accessed by opening your
+favorite browser and navigating to:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>http://localhost:8080
+</pre></div>
+</div>
+<p>The default username and password are both <em>admin</em>.</p>
+<p>If you are accessing the frontend from another machine, replace <em>localhost</em>
+with the IP Address or URL of the machine running Polyglot. If you are having
+trouble accessing the user interace from a remote machine, check your firewall
+settings.</p>
+<a class="reference internal image-reference" href="_images/settings.png"><img alt="_images/settings.png" class="align-center" src="_images/settings.png" style="width: 549.5px; height: 300.0px;" /></a>
+<p>The user interface is designed to be simple and intuitive to use. Pictured
+above is the settings page. Using the menu bar on the left, new node servers
+can be added and existing node servers may be monitored. The button on the
+bottom of the menu will open Polyglot&#8217;s log in a new browser window.</p>
+<p>The user interface is fully compatible with both tablet and mobile devices.</p>
+<div class="section" id="settings">
+<h3>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h3>
+<p>The settings view allows the user to alter settings for Polyglot&#8217;s HTTP server
+as well as Polyglot&#8217;s connection to the ISY controller. It is recomended that
+the username and password are changed from the default. If a new different port
+is desired, it may be set in the <em>Server Configuration</em> block.</p>
+<p>It is also necessary to set the username, password, host name, and port
+required for connecting to the ISY. These may be configured in the <em>ISY
+Configuration</em> block.</p>
+</div>
+<div class="section" id="adding-node-server">
+<h3>Adding Node Server<a class="headerlink" href="#adding-node-server" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/add_ns.png"><img alt="_images/add_ns.png" class="align-center" src="_images/add_ns.png" style="width: 556.5px; height: 420.35px;" /></a>
+<p>To add a node server, navigate to the <em>Add Node Server</em> view using the menu.
+This view is pictured above.</p>
+<p>Populate this form with the details for the new node server. Select a type from
+all installed types using the drop down. Give the node server any name allows
+for easy recognition. Finally, populate the <em>Node Server ID</em> field with an ID
+that is available in the ISY. Press <em>ADD</em> when complete.</p>
+<p>The node server will now be available in Polyglot. You may navigate to it using
+the menu. The node server view in Polyglot will show the Node Server ID, Base
+URL, and allow for the Profile to be downloaded.</p>
+<p>In order to access the node server from the ISY, it must be added to the ISY.
+To do this, inside of the ISY console, navigate to Node Servers then Configure
+then the Node Server ID that was set while creating the node server. This will
+open a dialog that accepts all the information from the node server view.
+Populate this with the Profile Name and Base URL from the node server view.
+The User ID, Passsword, Host Name, and Port here must be the values used for
+connecting to Polyglot. Timeout may be left as 0, and the Isy User should be
+set to the appropriate user ID that was configured in Polyglot. If you are
+unsure, use 0.</p>
+<p>Click the <em>Upload Profile</em> button and navigate to the zip file obtained from
+Polyglot&#8217;s node server view. Once this has been uploaded, click <em>Ok</em> and
+restart the ISY controller. Once the ISY has fully rebooted, restart the
+node server in Polyglot using the node server view.</p>
+</div>
+<div class="section" id="managing-node-servers">
+<h3>Managing Node Servers<a class="headerlink" href="#managing-node-servers" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/view_ns.png"><img alt="_images/view_ns.png" class="align-center" src="_images/view_ns.png" style="width: 548.5px; height: 299.5px;" /></a>
+<p>Clicking a Node Server in the menu will activate the node server view. In this
+view, there is a menu bar at the top. This menu bar will indicate is the node
+server is Running or Stopped. It also provides buttons to download the profile,
+restart the node server, or delete the node server.</p>
+<p>Also in this view are instructions for using this node server. Different node
+servers may have their own instructions on how to use them in the ISY. Any
+open-source, third party libraries that were used for the development of the
+node server are also credited here.</p>
+<p>If the node server were to crash, a red X will appear next to it in the menu
+and it will be indicated in the menu bar on the top of the node server view.
+If this happens, it is best to save the log for debugging and then restart the
+node server using the button in the menu bar.</p>
+</div>
+<div class="section" id="viewing-polyglot-log">
+<h3>Viewing Polyglot Log<a class="headerlink" href="#viewing-polyglot-log" title="Permalink to this headline">¶</a></h3>
+<p>There is a file icon below all the main menu items. Clicking this icon will
+open Polyglot&#8217;s log in a new browser window. This log file is critical for
+debugging issues with Polyglot.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="nsdev.html" class="btn btn-neutral float-right" title="Node Server Development" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Polyglot Virtual Node Server Framework" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Universal Devices Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.6',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

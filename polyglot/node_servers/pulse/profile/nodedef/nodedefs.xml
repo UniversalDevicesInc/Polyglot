@@ -1,0 +1,59 @@
+<!-- Version 0.0.4 -->
+<nodeDefs>
+
+  <!-- Main node -->
+  <nodeDef id="PULSE_MAIN" nls="PLSMAIN">
+    <editors />
+    <sts>
+      <st id="ST" editor="PULSE_T" />
+    </sts>
+    <cmds>
+      <sends>
+	<cmd id="DON" />
+      </sends>
+      <accepts />
+    </cmds>
+  </nodeDef>
+
+  <!-- ISY Restart Detection -->
+  <nodeDef id="PULSE_RSTRT_DETECT" nls="PLSRD">
+    <editors />
+    <sts>
+      <st id="ST" editor="PULSE_OOF" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+	<cmd id="ENABLERD" />
+	<cmd id="DISABLERD" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <!-- Diagnostic/Test node -->
+  <nodeDef id="PULSE_DIAG" nls="PLSDIAG">
+    <editors />
+    <sts>
+      <st id="ST" editor="PULSE_PCT" />
+      <st id="GV1" editor="PULSE_UPF" />
+      <st id="GV2" editor="PULSE_T" />
+      <st id="GV3" editor="PULSE_T" />
+      <st id="GV4" editor="PULSE_T" />
+      <st id="GV5" editor="PULSE_T" />
+      <st id="GV6" editor="PULSE_T" />
+      <st id="GV7" editor="PULSE_T" />
+      <st id="GV8" editor="PULSE_T" />
+      <st id="GV9" editor="PULSE_T" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+	<cmd id="TESTQUERY" />
+	<cmd id="TESTCOUNT" />
+	<cmd id="CLRSTATS" />
+	<cmd id="UPDTSTATS" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+</nodeDefs>

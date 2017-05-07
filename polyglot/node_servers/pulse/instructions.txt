@@ -1,0 +1,120 @@
+1. Install node server on the ISY controller.
+2. On the ISY, run the "add all" operation to create the nodes.
+
+
+Create programs on the ISY to monitor the Pulse server.
+
+<ol>
+<li> First create a state variable s.Polyglot.Pulse, or whatever you want to call it.
+<li> Create all the following programs
+<ol>
+<li> I put them all in a subfolder:
+<pre>
+    ===========================================
+    Polyglot - [ID 025B][Parent 0001]
+
+    Folder Conditions for 'Polyglot'
+
+    If
+       - No Conditions - (To add one, press 'Schedule' or 'Condition')
+ 
+    Then
+       Allow the programs in this folder to run.
+</pre>
+
+<li> Heartbeat Monitor
+<pre>
+    -------------------------------------------
+    Pulse - [ID 025C][Parent 025B]
+
+    If
+        'Pulse Heartbeat and Time' is switched On
+ 
+    Then
+        $s.Polyglot.Pulse  = 1
+        Wait  5 minutes 
+        $s.Polyglot.Pulse  = 2
+ 
+    Else
+        $s.Polyglot.Pulse  = 2
+ 
+    Watch for Pulse DON, wait 5 minutes and set error if not seen.
+</pre>
+
+<li> Okay notification
+<pre>
+    -------------------------------------------
+    Pulse Okay - [ID 0260][Parent 025B]
+
+    If
+        $s.Polyglot.Pulse is 1
+ 
+    Then
+        Send Notification to 'Pushover-P1' content 'Polyglot Status'
+ 
+    This will be sent when Pulse status is changed from anything to 1.
+    Which means it will be sent when a problem is fixed, or ISY is starting up.
+</pre>
+
+<li> Problem Notification
+<pre>
+    -------------------------------------------
+    Pulse Problem - [ID 025D][Parent 025B]
+
+    If
+        $s.Polyglot.Pulse is 2
+ 
+    Then
+        Send Notification to 'Pushover-P1' content 'Polyglot Status'
+ 
+    Pulse status 2 is a problem, send notification.
+</pre>
+
+<li> Daily Problem reminder
+<pre>
+    -------------------------------------------
+    Pulse Problem Reminder - [ID 025F][Parent 025B]
+
+    If
+        $s.Polyglot.Pulse is 2
+    And (
+             Time is  8:00:00AM
+          Or Time is  6:00:00PM
+        )
+ 
+    Then
+        Send Notification to 'Pushover-P1' content 'Polyglot Status'
+ 
+    Pulse status 2 is a problem, send notification every day.
+</pre>
+
+<li> Startup action
+<pre>
+    -------------------------------------------
+    Pulse Startup - [ID 025E][Parent 025B]
+
+    If
+        $s.Polyglot.Pulse is 0
+ 
+    Then
+        Run Program 'Pulse' (Then Path)
+ 
+    Pulse init is zero, which only happens at startup, so start watching the Pulse.
+</pre>
+</ol>
+
+<li> Create a custom notification 'Polyglot Status':
+<pre>
+Subject: ISY: Polyglot Status
+Body:
+Pulse Status: ${var.2.155}
+0: Not initialized
+1: Okay
+2: Not responding
+
+${sys.node.n005_pulse.name}: ${sys.node.n005_pulse.ST}
+
+${sys.node.n005_pulsediagtest.name}: 
+Score: ${sys.node.n005_pulsediagtest.ST}
+</pre>
+</ol>

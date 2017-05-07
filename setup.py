@@ -9,7 +9,7 @@ PACKAGES = ['polyglot', 'polyglot.element_manager',
 # run setup
 setup(
     name="Polyglot",
-    version="0.0.1",
+    version="0.0.6",
     author="Universal Devices Inc",
     platforms="any",
     ext_modules=cythonize('polyglot/*.pyx'),

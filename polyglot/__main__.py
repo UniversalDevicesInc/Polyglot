@@ -106,6 +106,11 @@ def setup_logging(config_dir, verbose):
     file_handler.setFormatter(logging.Formatter(fmt, datefmt=dtfmt))
     logging.getLogger('').addHandler(file_handler)
 
+    # special handling to suppress chatter from urllib3 and requests
+    # when at "info" level logging.
+    if verbose == 1:
+        logging.getLogger('urllib3').setLevel(logging.WARNING)
+        logging.getLogger('requests').setLevel(logging.WARNING)
 
 def cleanup(source_dir):
     """ Cleanup Polyglot environment """

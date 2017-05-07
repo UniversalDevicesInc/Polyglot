@@ -94,6 +94,7 @@ class ConfigHandler(GenericAPIHandler):
     def get(self):
         ''' worker '''
         config = PGLOT.elements.config
+        config['pgver'] = PGLOT.version
         self.send_json(config)
 
 
@@ -170,32 +171,44 @@ class ServerHandler(GenericAPIHandler):
     ''' /server/([A-Za-z0-9]+) '''
     def get(self, base_url):
         ''' worker '''
-        self.send_json(PGLOT.nodeservers.servers[base_url].definition)
+        if base_url in PGLOT.nodeservers.servers:
+            self.send_json(PGLOT.nodeservers.servers[base_url].definition)
+        else:
+            self.send_not_found()
 
 
 class ServerProfileHandler(GenericAPIHandler):
     ''' /server/([A-Za-z0-9]+)/profile '''
     def get(self, base_url):
         ''' worker '''
-        profile = PGLOT.nodeservers.servers[base_url].profile
-        name = PGLOT.nodeservers.servers[base_url].name
-        self.send_zip('{}_profile.zip'.format(name), profile)
+        if base_url in PGLOT.nodeservers.servers:
+            profile = PGLOT.nodeservers.servers[base_url].profile
+            name = PGLOT.nodeservers.servers[base_url].name
+            self.send_zip('{}_profile.zip'.format(name), profile)
+        else:
+            self.send_not_found()
 
 
 class ServerRestartHandler(GenericAPIHandler):
     ''' /server/([A-Za-z0-9]+)/restart '''
     def get(self, base_url):
         ''' worker '''
-        PGLOT.nodeservers.servers[base_url].restart()
-        self.send_json()
+        if base_url in PGLOT.nodeservers.servers:
+            PGLOT.nodeservers.servers[base_url].restart()
+            self.send_json()
+        else:
+            self.send_not_found()
 
 
 class ServerDeleteHandler(GenericAPIHandler):
     ''' /server/([A-Za-z0-9]+)/delete '''
     def get(self, base_url):
         ''' worker '''
-        PGLOT.nodeservers.delete(base_url)
-        self.send_json()
+        if base_url in PGLOT.nodeservers.servers:
+            PGLOT.nodeservers.delete(base_url)
+            self.send_json()
+        else:
+            self.send_not_found()
 
 
 class LogHandler(GenericAPIHandler):

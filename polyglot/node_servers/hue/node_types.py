@@ -96,10 +96,9 @@ class HueColorLight(Node):
             self.set_driver('GV1', updates[0], report=False)
             self.set_driver('GV2', updates[1], report=False)
             self.set_driver('ST', updates[2], report=False)
-            self.report_driver()
-            return True
-        else:
-            return False
+        # This is an explicit query - always report
+        self.report_driver()
+        return True
 
     def _st(self, **kwargs):
         """ handle status command """

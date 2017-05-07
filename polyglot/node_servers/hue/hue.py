@@ -17,6 +17,7 @@ class HueNodeServer(SimpleNodeServer):
     """ Phillips Hue Node Server """
 
     hub = None
+    hub_queried = False
 
     def setup(self):
         """ Initial node setup. """
@@ -24,7 +25,7 @@ class HueNodeServer(SimpleNodeServer):
         manifest = self.config.get('manifest', {})
         HubSettings(self, 'hub', 'Hue Hub', True, manifest)
         self.connect()
-        self.update_config()
+        self.update_config(self.hub_queried)
 
     def connect(self):
         """ Connect to Phillips Hue Hub """
@@ -85,6 +86,7 @@ class HueNodeServer(SimpleNodeServer):
             lnode.set_driver('GV2', color_y)
             lnode.set_driver('ST', brightness)
 
+        self.hub_queried = True
         return True
 
     def query_node(self, lkp_address):
@@ -122,7 +124,7 @@ class HueNodeServer(SimpleNodeServer):
 
     def long_poll(self):
         """ Save configuration every 30 seconds. """
-        self.update_config()
+        self.update_config(self.hub_queried)
 
 
 def main():

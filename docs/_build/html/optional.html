@@ -1,0 +1,378 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Optional Components &mdash; Polyglot 0.0.6 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Polyglot 0.0.6 documentation" href="index.html"/>
+        <link rel="next" title="Changelog" href="changelog.html"/>
+        <link rel="prev" title="Polyglot Methods and Classes" href="module.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Polyglot
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsdev.html">Node Server Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsexample.html">Python Node Server Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsapi.html">Polyglot Node Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module.html">Polyglot Methods and Classes</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Optional Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#docker">Docker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#linux-x86-64">Linux x86_64</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#raspberry-pi">Raspberry Pi</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Polyglot</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Optional Components</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/optional.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="optional-components">
+<h1>Optional Components<a class="headerlink" href="#optional-components" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="docker">
+<h2>Docker<a class="headerlink" href="#docker" title="Permalink to this headline">¶</a></h2>
+<p>These are the instructions for Docker configuration provided by
+UDI forum and Polyglot contributor i814u2.</p>
+<p>Original Threads:</p>
+<p><a class="reference external" href="http://forum.universal-devices.com/topic/19807-%20polyglot-docker-%20image/#entry187776">http://forum.universal-devices.com/topic/19807-%20polyglot-docker-%20image/#entry187776</a>
+<a class="reference external" href="http://forum.universal-devices.com/topic/19807-%20polyglot-docker-%20image/page-2">http://forum.universal-devices.com/topic/19807-%20polyglot-docker-%20image/page-2</a></p>
+<div class="section" id="linux-x86-64">
+<h3>Linux x86_64<a class="headerlink" href="#linux-x86-64" title="Permalink to this headline">¶</a></h3>
+<p>Create a file named &#8220;Dockerfile&#8221; (case-sensitive) and place these
+commands in there:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>ARG <span class="nv">binfile</span><span class="o">=</span>polyglot.linux.x86_64.pyz
+ARG <span class="nv">user</span><span class="o">=</span>polyglot
+ARG <span class="nv">group</span><span class="o">=</span>polyglot
+ARG <span class="nv">uid</span><span class="o">=</span>1000
+ARG <span class="nv">gid</span><span class="o">=</span>1000
+
+
+RUN addgroup -g <span class="si">${</span><span class="nv">gid</span><span class="si">}</span> <span class="si">${</span><span class="nv">group</span><span class="si">}</span> <span class="se">\</span>
+    <span class="o">&amp;&amp;</span> adduser -h /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span> -s /bin/sh -G <span class="si">${</span><span class="nv">group</span><span class="si">}</span> -D -u <span class="si">${</span><span class="nv">uid</span><span class="si">}</span> <span class="si">${</span><span class="nv">user</span><span class="si">}</span>
+
+
+WORKDIR /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span>
+COPY custom.txt .
+
+
+RUN pip install --upgrade pip <span class="se">\</span>
+<span class="o">&amp;&amp;</span> pip install -r https://raw.githubusercontent.com/UniversalDevicesInc/Polyglot/unstable-release/requirements.txt <span class="se">\</span>
+<span class="o">&amp;&amp;</span> <span class="k">while</span> <span class="nb">read</span> line<span class="p">;</span> <span class="k">do</span> <span class="nv">$line</span><span class="p">;</span> <span class="k">done</span> &lt; custom.txt
+
+
+RUN wget https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/<span class="si">${</span><span class="nv">binfile</span><span class="si">}</span>-P Polyglot <span class="se">\</span>
+<span class="o">&amp;&amp;</span> chown -R <span class="si">${</span><span class="nv">user</span><span class="si">}</span>:<span class="si">${</span><span class="nv">group</span><span class="si">}</span> /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span> <span class="se">\</span>
+<span class="o">&amp;&amp;</span> chmod <span class="m">755</span> /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span>/Polyglot/<span class="si">${</span><span class="nv">binfile</span><span class="si">}</span>
+
+
+USER <span class="si">${</span><span class="nv">user</span><span class="si">}</span>
+WORKDIR /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span>/Polyglot
+ENTRYPOINT <span class="o">[</span><span class="s2">&quot;./polyglot.linux.x86_64.pyz&quot;</span>,<span class="s2">&quot;-v&quot;</span><span class="o">]</span>
+</pre></div>
+</div>
+<p>Create a file named &#8220;custom.txt&#8221; and add whatever python modules and node servers you&#8217;d like installed.
+Here is the example I have for adding Sonos and Nest:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>pip install soco
+pip install python-nest
+git clone https://github.com/Einstein42/sonos-polyglot Polyglot/config/node_servers/sonos-polyglot
+git clone https://github.com/Einstein42/nest-polyglot Polyglot/config/node_servers/nest-polyglot
+</pre></div>
+</div>
+<p>Create a folder to store your config:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir -p ~/docker/polyglot
+</pre></div>
+</div>
+<p>(If you already have polyglot up and running, backup your config folder and then just point this to your existing config folder instead of the one above. This should work, but always make a backup.)</p>
+<p>The image is built by running this command (from the folder where you Dockerfile and custom.txt files are located):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>docker build -t polyglot .
+</pre></div>
+</div>
+<p>After that completes, you should be able to run a command like this:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>docker run -d --name<span class="o">=</span>polyglot -v ~/docker/polyglot:/home/polyglot/Polyglot/config --net<span class="o">=</span>host -t polyglot-docker
+</pre></div>
+</div>
+<p>The polyglot page should be available via your docker host machine&#8217;s IP and port 8080. If that needs to change, allow it to start, then stop the container (docker stop polyglot), edit the configuration.json in the config folder on your docker host. Then start it back up (docker start polyglot).
+I chose to use the non-compiled variation so that it would run across more systems. Another item I&#8217;d like to improve is only using the compiled version in order to save space.</p>
+<p><strong>Ready to use image for linux x86_64</strong></p>
+<p>Run this command, assuming you already have docker setup and running for your user on your linux machine.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir -p ~/docker/polyglot <span class="o">&amp;&amp;</span> docker run -d --name<span class="o">=</span>polyglot -v ~/docker/polyglot:/home/polyglot/Polyglot/config --net<span class="o">=</span>host -t i814u2/udi-polyglot
+</pre></div>
+</div>
+<p>Then re-pull the image in order to update it, and re-create the container (this will also start the container, of course):</p>
+</div>
+<div class="section" id="raspberry-pi">
+<h3>Raspberry Pi<a class="headerlink" href="#raspberry-pi" title="Permalink to this headline">¶</a></h3>
+<p>Use NOOBS to install Raspbian on your Raspberry Pi (see here: <a class="reference external" href="https://www.raspberrypi.org/documentation/installation/noobs.md">https://www.raspberrypi.org/documentation/installation/noobs.md</a>)</p>
+<p>Once the Raspberry Pi is booted, open the terminal and enter the following command:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -sSL https://get.docker.com <span class="p">|</span> sh <span class="o">&amp;&amp;</span> sudo usermod -aG docker pi
+</pre></div>
+</div>
+<p>This may take a while, depending on the speed of the machine and SD card.</p>
+<p>Once the above command is complete, logout and log back in, or just reboot if you prefer.</p>
+<p>Run this command to download and start the docker container (using the pre-setup image in my docker hub repository):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir ~/docker/polyglot <span class="o">&amp;&amp;</span> docker run -d --name<span class="o">=</span>polyglot -v ~/docker/polyglot:/home/polyglot/Polyglot/config --net<span class="o">=</span>host -t i814u2/rpi-udi-polyglot
+</pre></div>
+</div>
+<p>Image contains the default Kodi and Hue nodes and also the Sonos and Nest nodes.
+Second command updated to include the creation of the local config directory to ensure proper permissions.</p>
+<p>If you&#8217;ve followed my instructions so far, and want to update, here is what you can do: (This assumes you followed the instructions and have your config files pointed to a local directory. Always make a backup of your config first, just in case):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>docker stop polyglot
+docker rm polyglot
+docker pull i814u2/rpi-udi-polyglot
+docker run -d --name<span class="o">=</span>polyglot -v ~/docker/polyglot:/home/polyglot/Polyglot/config --net<span class="o">=</span>host -t i814u2/rpi-udi-polyglot
+</pre></div>
+</div>
+<p>(4 separate commands, one per line, each starts with the word &#8216;docker&#8217;)</p>
+<p>Again, the last line assumes you followed the copy/paste style info in my previous posts for a RaspberryPi setup. Adjust, as needed, for your own directory structure.</p>
+<p>Quick note: this will take a while on initial startup. It&#8217;s upgrading packages when the container is started (in order to avoid the need to re-pull the image each time).</p>
+<p><strong>More detail on how the image is setup:</strong></p>
+<p>Follow the normal guides to install Raspbian on your RPi, then run this command to install Docker:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -sSL https://get.docker.com <span class="p">|</span> sh
+</pre></div>
+</div>
+<p>When that is complete, it will mention adding your user to the docker group in order to run without sudo. That is accomplished with this command:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo usermod -aG docker pi
+</pre></div>
+</div>
+<p>That assumes you&#8217;re using the &#8220;pi&#8221; user, and not your own. You&#8217;ll need to log out, then log back on in order for that change to take effect.</p>
+<p>Here is the Dockerfile info for a Raspberry Pi:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>FROM fnphat/rpi-alpine-python:2.7
+
+ARG <span class="nv">binfile</span><span class="o">=</span>polyglot.linux.armv7l.pyz
+ARG <span class="nv">user</span><span class="o">=</span>polyglot
+ARG <span class="nv">group</span><span class="o">=</span>polyglot
+ARG <span class="nv">uid</span><span class="o">=</span>1000
+ARG <span class="nv">gid</span><span class="o">=</span>1000
+
+RUN addgroup -g <span class="si">${</span><span class="nv">gid</span><span class="si">}</span> <span class="si">${</span><span class="nv">group</span><span class="si">}</span> <span class="se">\</span>
+        <span class="o">&amp;&amp;</span> adduser -h /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span> -s /bin/sh -G <span class="si">${</span><span class="nv">group</span><span class="si">}</span> -D -u <span class="si">${</span><span class="nv">uid</span><span class="si">}</span> <span class="si">${</span><span class="nv">user</span><span class="si">}</span>
+
+WORKDIR /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span>
+COPY custom.txt .
+
+RUN apk add --update <span class="se">\</span>
+        build-base python-dev linux-headers git ca-certificates wget openssl-dev <span class="se">\</span>
+        <span class="o">&amp;&amp;</span> rm -rf /var/cache/apk/*
+
+RUN pip install --upgrade pip <span class="se">\</span>
+    <span class="o">&amp;&amp;</span> pip install -r https://raw.githubusercontent.com/UniversalDevicesInc/Polyglot/unstable-release/requirements.txt <span class="se">\</span>
+    <span class="o">&amp;&amp;</span> <span class="k">while</span> <span class="nb">read</span> line<span class="p">;</span> <span class="k">do</span> <span class="nv">$line</span><span class="p">;</span> <span class="k">done</span> &lt; custom.txt
+
+RUN wget https://github.com/UniversalDevicesInc/Polyglot/raw/unstable-release/bin/<span class="si">${</span><span class="nv">binfile</span><span class="si">}</span> -P Polyglot <span class="se">\</span>
+    <span class="o">&amp;&amp;</span> chown -R <span class="si">${</span><span class="nv">user</span><span class="si">}</span>:<span class="si">${</span><span class="nv">group</span><span class="si">}</span> /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span> <span class="se">\</span>
+    <span class="o">&amp;&amp;</span> chmod <span class="m">755</span> /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span>/Polyglot/<span class="si">${</span><span class="nv">binfile</span><span class="si">}</span>
+
+USER <span class="si">${</span><span class="nv">user</span><span class="si">}</span>
+WORKDIR /home/<span class="si">${</span><span class="nv">user</span><span class="si">}</span>/Polyglot
+ENTRYPOINT <span class="o">[</span><span class="s2">&quot;./polyglot.linux.armv7l.pyz&quot;</span>, <span class="s2">&quot;-v&quot;</span><span class="o">]</span>
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li>Use NOOBS to install Raspbian on your Raspberry Pi (see here: <a class="reference external" href="https://www.raspberr...lation/noobs.md">https://www.raspberr...lation/noobs.md</a>)</li>
+<li>Once the Raspberry Pi is booted, open the terminal and enter the following command:</li>
+</ol>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -sSL https://get.docker.com <span class="p">|</span> sh <span class="o">&amp;&amp;</span> sudo usermod -aG docker pi
+</pre></div>
+</div>
+<p>That will take a while, depending on the speed of the machine and SD card.
+3. Once the above command is complete, logout and log back in, or just reboot if you prefer.
+4. Run this command to download and start the docker container (using the pre-setup image in my docker hub repository):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir -p ~/docker/polyglot <span class="o">&amp;&amp;</span> docker run -d --name<span class="o">=</span>polyglot -v ~/docker/polyglot:/home/polyglot/Polyglot/config --net<span class="o">=</span>host -t i814u2/rpi-udi-polyglot
+</pre></div>
+</div>
+<p>That image contains the default Kodi and Hue nodes and also the Sonos and Nest nodes.
+Re-pulling the images and restarting new containers is easily done by running these commands:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>docker stop polyglot
+docker rm polyglot
+</pre></div>
+</div>
+<p>Then re-pull the image in order to update it, and re-create the container (this will also start the container, of course):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>docker pull i814u2/rpi-udi-polyglot <span class="o">&amp;&amp;</span> docker run -d --name<span class="o">=</span>polyglot -v ~/docker/polyglot:/home/polyglot/Polyglot/config --net<span class="o">=</span>host -t i814u2/rpi-udi-polyglot
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="module.html" class="btn btn-neutral" title="Polyglot Methods and Classes" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Universal Devices Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.6',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

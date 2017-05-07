@@ -32,9 +32,9 @@ sys.path.insert(0, os.path.abspath('..'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    'rst2pdf.pdfbuilder'
 ]
 
+#     'rst2pdf.pdfbuilder'
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -51,15 +51,15 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Polyglot'
-copyright = u'2015, Ryan M. Kraus'
-author = u'Ryan M. Kraus'
+copyright = u'2015, Universal Devices Inc.'
+author = u'Universal Devices Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.0.2'
+version = '0.0.6'
 # The full version, including alpha/beta/rc tags.
 release = version
 

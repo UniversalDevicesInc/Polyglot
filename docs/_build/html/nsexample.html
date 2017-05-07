@@ -1,0 +1,501 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Python Node Server Example &mdash; Polyglot 0.0.6 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Polyglot 0.0.6 documentation" href="index.html"/>
+        <link rel="next" title="Polyglot Node Server API" href="nsapi.html"/>
+        <link rel="prev" title="Node Server Development" href="nsdev.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Polyglot
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsdev.html">Node Server Development</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Python Node Server Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#node-type-definition">Node Type Definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#node-server-creation">Node Server Creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#starting-the-node-server">Starting the Node Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-the-node-server">Installing the Node Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-node-server-configuration-file">Custom Node Server Configuration File</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nsapi.html">Polyglot Node Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module.html">Polyglot Methods and Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optional.html">Optional Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Polyglot</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Python Node Server Example</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/nsexample.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="python-node-server-example">
+<h1>Python Node Server Example<a class="headerlink" href="#python-node-server-example" title="Permalink to this headline">¶</a></h1>
+<p>The following is a brief example of some impliemented node servers written in
+Python. The examples included are pulled from the Philips Hue Node Server and
+may not be current with the actual code used in that node server and is
+redacted a bit for clarity, but will serve as a solid jumping off point for
+defining the process by which a new node server can be developed.</p>
+<div class="section" id="node-type-definition">
+<h2>Node Type Definition<a class="headerlink" href="#node-type-definition" title="Permalink to this headline">¶</a></h2>
+<p>Some may find it easiest to start by developing all the types of nodes that the
+node server may be controlling. As these are being defined in code, it may be
+best to also define them in the file that will eventually make up the
+<em>profile.zip</em> file. Documentation for profile files is available in the ISY
+Virtual Node Server API documentation.</p>
+<p>Below is the definition for a Hue color changing light.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">converters</span> <span class="kn">import</span> <span class="n">RGB_2_xy</span><span class="p">,</span> <span class="n">color_xy</span><span class="p">,</span> <span class="n">color_names</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">polyglot.nodeserver_api</span> <span class="kn">import</span> <span class="n">Node</span>
+
+<span class="k">def</span> <span class="nf">myint</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; round and convert to int &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">myfloat</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; round and return float &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">prec</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">HueColorLight</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Node representing Hue Color Light &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">lamp_id</span><span class="p">,</span> <span class="n">manifest</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HueColorLight</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lamp_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">lamp_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; command called by ISY to query the node. &quot;&quot;&quot;</span>
+        <span class="n">updates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">query_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">updates</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_driver</span><span class="p">(</span><span class="s1">&#39;GV1&#39;</span><span class="p">,</span> <span class="n">updates</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">report</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_driver</span><span class="p">(</span><span class="s1">&#39;GV2&#39;</span><span class="p">,</span> <span class="n">updates</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">report</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_driver</span><span class="p">(</span><span class="s1">&#39;ST&#39;</span><span class="p">,</span> <span class="n">updates</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">report</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">report_driver</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">_set_brightness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; set node brightness &quot;&quot;&quot;</span>
+        <span class="c1"># pylint: disable=unused-argument</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span> <span class="o">/</span> <span class="mf">100.</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">command</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;on&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s1">&#39;bri&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">command</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;on&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;on&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; turn light on &quot;&quot;&quot;</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_brightness</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">status</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_off</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; turn light off &quot;&quot;&quot;</span>
+        <span class="c1"># pylint: disable=unused-argument</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_brightness</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_color_rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; set light RGB color &quot;&quot;&quot;</span>
+        <span class="n">color_r</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;R.uom56&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">color_g</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;G.uom56&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">color_b</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;B.uom56&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">color_x</span><span class="p">,</span> <span class="n">color_y</span><span class="p">)</span> <span class="o">=</span> <span class="n">RGB_2_xy</span><span class="p">(</span><span class="n">color_r</span><span class="p">,</span> <span class="n">color_g</span><span class="p">,</span> <span class="n">color_b</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xy&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">color_x</span><span class="p">,</span> <span class="n">color_y</span><span class="p">],</span> <span class="s1">&#39;on&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_color_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; set light XY color &quot;&quot;&quot;</span>
+        <span class="n">color_x</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;X.uom56&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">color_y</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Y.uom56&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xy&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">color_x</span><span class="p">,</span> <span class="n">color_y</span><span class="p">],</span> <span class="s1">&#39;on&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; set color from index &quot;&quot;&quot;</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">ind</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">color_names</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="n">cname</span> <span class="o">=</span> <span class="n">color_names</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">color_xy</span><span class="p">(</span><span class="n">cname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_color_xy</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="s1">&#39;X.uom56&#39;</span><span class="p">:</span> <span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;Y.uom56&#39;</span><span class="p">:</span> <span class="n">color</span><span class="p">[</span><span class="mi">1</span><span class="p">]})</span>
+
+    <span class="k">def</span> <span class="nf">_send_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; generic method to send command to hue hub &quot;&quot;&quot;</span>
+        <span class="n">responses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">hub</span><span class="o">.</span><span class="n">set_light</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lamp_id</span><span class="p">,</span> <span class="n">command</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;success&#39;</span> <span class="k">for</span> <span class="n">resp</span> <span class="ow">in</span> <span class="n">responses</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+    <span class="n">_drivers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;GV1&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="n">myfloat</span><span class="p">],</span> <span class="s1">&#39;GV2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="n">myfloat</span><span class="p">],</span>
+                <span class="s1">&#39;ST&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="n">myint</span><span class="p">]}</span>
+    <span class="sd">&quot;&quot;&quot; Driver Details:</span>
+<span class="sd">    GV1: Color X</span>
+<span class="sd">    GV2: Color Y</span>
+<span class="sd">    ST: Status / Brightness</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_commands</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;DON&#39;</span><span class="p">:</span> <span class="n">_on</span><span class="p">,</span> <span class="s1">&#39;DOF&#39;</span><span class="p">:</span> <span class="n">_off</span><span class="p">,</span>
+                 <span class="s1">&#39;SET_COLOR_RGB&#39;</span><span class="p">:</span> <span class="n">_set_color_rgb</span><span class="p">,</span>
+                 <span class="s1">&#39;SET_COLOR_XY&#39;</span><span class="p">:</span> <span class="n">_set_color_xy</span><span class="p">,</span>
+                 <span class="s1">&#39;SET_COLOR&#39;</span><span class="p">:</span> <span class="n">_set_color</span><span class="p">}</span>
+    <span class="n">node_def_id</span> <span class="o">=</span> <span class="s1">&#39;COLOR_LIGHT&#39;</span>
+</pre></div>
+</div>
+<p>As can be seen here, one method is defined for each of the commands that the
+node may run. The query method from the Node ABC is also overwritten to
+provide the desired functionality. An additional method called _send_command is
+also created. This is not called by the ISY directly, but is a helper used to
+send information to the Hue device. This method calls a method from a third
+party library that connects to the Hue lighting system.</p>
+<p>Additionally, the _drivers, _command, and node_def_id properties are
+overwritten. This must be done by every node class as it instructs the node
+server classes on how to interact with this node. Custom formatters myint and
+myfloat are used to format the control values.</p>
+<p>This process must be repeated for each type of node that is desired.</p>
+</div>
+<div class="section" id="node-server-creation">
+<h2>Node Server Creation<a class="headerlink" href="#node-server-creation" title="Permalink to this headline">¶</a></h2>
+<p>Once all the nodes are defined, the node server class can be created.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">polyglot.nodeserver_api</span> <span class="kn">import</span> <span class="n">SimpleNodeServer</span><span class="p">,</span> <span class="n">PolyglotConnector</span>
+<span class="c1"># ... additional imports are redacted for clarity</span>
+
+<span class="k">class</span> <span class="nc">HueNodeServer</span><span class="p">(</span><span class="n">SimpleNodeServer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Phillips Hue Node Server &quot;&quot;&quot;</span>
+
+    <span class="n">hub</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initial node setup. &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleNodeServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+        <span class="c1"># define nodes for settings</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;manifest&#39;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">HubSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;hub&#39;</span><span class="p">,</span> <span class="s1">&#39;Hue Hub&#39;</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_config</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Connect to Phillips Hue Hub &quot;&quot;&quot;</span>
+        <span class="c1"># get hub settings</span>
+        <span class="n">hub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;hub&#39;</span><span class="p">)</span>
+        <span class="n">ip_addr</span> <span class="o">=</span> <span class="s1">&#39;{}.{}.{}.{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">hub</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;GV1&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">hub</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;GV2&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">hub</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;GV3&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">hub</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;GV4&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># ... Connects to the hub and validate connection. Redacted for clarity.</span>
+
+    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Poll Hue for new lights/existing lights&#39; statuses &quot;&quot;&quot;</span>
+
+        <span class="c1"># ... Connects to Hue Hub and gets current values for lights,</span>
+        <span class="c1">#     stores in dictionary called lights. Redacted for clarity.</span>
+
+        <span class="k">for</span> <span class="n">lamp_id</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">lights</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="n">id_2_addr</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;uniqueid&#39;</span><span class="p">])</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+
+            <span class="n">lnode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">lnode</span><span class="p">:</span>
+                <span class="c1"># Add the light to the Node Server if it doesn&#39;t already</span>
+                <span class="c1"># exist. Sets the primary to the &#39;hub&#39; Node.</span>
+                <span class="c1"># This automatically adds the light to the ISY.</span>
+                <span class="n">lnode</span> <span class="o">=</span> <span class="n">HueColorLight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span>
+                                     <span class="n">name</span><span class="p">,</span> <span class="n">lamp_id</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;hub&#39;</span><span class="p">),</span> <span class="n">manifest</span><span class="p">)</span>
+
+            <span class="p">(</span><span class="n">color_x</span><span class="p">,</span> <span class="n">color_y</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+                                  <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">][</span><span class="s1">&#39;xy&#39;</span><span class="p">]]</span>
+            <span class="n">brightness</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">][</span><span class="s1">&#39;bri&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">255.</span> <span class="o">*</span> <span class="mf">100.</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="n">brightness</span> <span class="o">=</span> <span class="n">brightness</span> <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">][</span><span class="s1">&#39;on&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">lnode</span><span class="o">.</span><span class="n">set_driver</span><span class="p">(</span><span class="s1">&#39;GV1&#39;</span><span class="p">,</span> <span class="n">color_x</span><span class="p">)</span>
+            <span class="n">lnode</span><span class="o">.</span><span class="n">set_driver</span><span class="p">(</span><span class="s1">&#39;GV2&#39;</span><span class="p">,</span> <span class="n">color_y</span><span class="p">)</span>
+            <span class="n">lnode</span><span class="o">.</span><span class="n">set_driver</span><span class="p">(</span><span class="s1">&#39;ST&#39;</span><span class="p">,</span> <span class="n">brightness</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">query_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lkp_address</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; find specific node in api. &quot;&quot;&quot;</span>
+
+        <span class="c1"># ... Polls Hue Hub for current specified light values, and updates</span>
+        <span class="c1">#     Node object with new values. Works very similarly to poll</span>
+        <span class="c1">#     above. Redacted for clarity.</span>
+
+    <span class="k">def</span> <span class="nf">_get_api</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; get hue hub api data. &quot;&quot;&quot;</span>
+
+        <span class="c1"># ... Uses third party library to get updated Hue Hub information.</span>
+        <span class="c1">#     Redacted for clarity.</span>
+
+    <span class="k">def</span> <span class="nf">long_poll</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Save configuration every 30 seconds. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_config</span><span class="p">()</span>
+        <span class="c1"># In this example, the configuration is autoatically saved every</span>
+        <span class="c1"># 30 seconds. Make sure your node server saves its configuration</span>
+        <span class="c1"># at some point.</span>
+</pre></div>
+</div>
+<p>This example class contains four methods that are not part of the abstract
+class. They are setup, connect, query_node, and _get_api. These functions will
+probably not appear in all node servers and are very specific to this one.</p>
+<p>However, the setup method is a good way to handle any node server setup that
+must be done that is specific to your node server. In this example, the primary
+node, the Hue Hub, is created and a connection is attempted.</p>
+<p>This class also stores an object called hub as an attribute. This objet is an
+instance of a class from the third party library used. This object is the
+actual connection to the Hue Hub. It may be best to follow a similar method
+when creating node servers so that the code that handles the connection is
+differentiated from the code that organizes the nodes.</p>
+<p>The poll and long_poll methods from the abstract class are used in this
+example. The Hue Hub sends no event stream, so it must be polled for updates.
+This is done in the poll method. The long_poll method is utilized to ensure the
+configuration data is saved consistently. These methods do not need to be
+manually called anywhere as they are automatically invoked from the run loop
+every (approximately) 1 second and 30 seconds respectively.</p>
+</div>
+<div class="section" id="starting-the-node-server">
+<h2>Starting the Node Server<a class="headerlink" href="#starting-the-node-server" title="Permalink to this headline">¶</a></h2>
+<p>Finally, your program must be able to initialize itself and begin running the
+node server. In Python, it will very nearly look like this.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; setup connection, node server, and nodes &quot;&quot;&quot;</span>
+    <span class="n">poly</span> <span class="o">=</span> <span class="n">PolyglotConnector</span><span class="p">()</span>
+    <span class="n">nserver</span> <span class="o">=</span> <span class="n">HueNodeServer</span><span class="p">(</span><span class="n">poly</span><span class="p">)</span>
+    <span class="n">poly</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>  <span class="c1"># begin listening for Polyglot commands</span>
+    <span class="n">poly</span><span class="o">.</span><span class="n">wait_for_config</span><span class="p">()</span>  <span class="c1"># This is best practice to not start until</span>
+                            <span class="c1"># Polyglot has begun communicating. This way,</span>
+                            <span class="c1"># Polyglot will not miss messages sent from</span>
+                            <span class="c1"># the node server.</span>
+    <span class="n">nserver</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>  <span class="c1"># setup method is specific to this example</span>
+    <span class="n">nserver</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>  <span class="c1"># begin node server run loop</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="installing-the-node-server">
+<h2>Installing the Node Server<a class="headerlink" href="#installing-the-node-server" title="Permalink to this headline">¶</a></h2>
+<p>Once all of this has been coded and all the appropriate files (documented in
+the last section) have been created, the node server directory can be placed
+in the configuration directory in a subfolder called <em>node_servers</em>. Polyglot
+should then be restarted to trigger the discovery of new node server types. If
+there is an issue with your node server, it will appear in the log.</p>
+</div>
+<div class="section" id="custom-node-server-configuration-file">
+<h2>Custom Node Server Configuration File<a class="headerlink" href="#custom-node-server-configuration-file" title="Permalink to this headline">¶</a></h2>
+<p>You may specify a custom configuration file in the server.json file as such:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s2">&quot;configfile&quot;</span><span class="p">:</span> <span class="s2">&quot;customfile.yaml&quot;</span>
+</pre></div>
+</div>
+<p>This should be placed in the top level of configuration, for example right after
+&#8220;executable&#8221;. If no &#8220;configfile&#8221; is specified, Polyglot will look for &#8220;config.yaml&#8221;
+in the root node_server folder(the same location as the server.json). If either
+file is found, then the contents will be loaded into a dictionary for consumption.
+The <strong>poly.nodeserver_config</strong> variable holds this dictionary.</p>
+<p>Your node server may modify this dictionary as necessary and use the function</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">write_nodeserver_config</span><span class="p">():</span>
+</pre></div>
+</div>
+<p>This method has two parameters that are optional. The defaults are shown here:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">default_flow_style</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">indent</span> <span class="o">=</span> <span class="mi">4</span>
+</pre></div>
+</div>
+<p>The default_flow_style is the formatting of the YAML file, look at the PyYAML
+documentation for specifics. The indent parameter is the number of spaces
+indented for each subline in the file. The default for our method is 4 because
+Python...</p>
+<p>This method checks for any differences in the running configuration and the
+existing file, and refrains from writing if they are identical. This method is
+also automatically called upon a normal shutdown of Polyglot. If Polyglot shuts
+down abnormally, it will not record any changes that you made if you did not
+call the write_nodeserver_config() method.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="nsapi.html" class="btn btn-neutral float-right" title="Polyglot Node Server API" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="nsdev.html" class="btn btn-neutral" title="Node Server Development" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Universal Devices Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.6',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

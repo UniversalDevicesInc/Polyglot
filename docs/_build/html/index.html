@@ -1,0 +1,265 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Polyglot Virtual Node Server Framework &mdash; Polyglot 0.0.6 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Polyglot 0.0.6 documentation" href="#"/>
+        <link rel="next" title="Usage" href="usage.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="#" class="icon icon-home"> Polyglot
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsdev.html">Node Server Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsexample.html">Python Node Server Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsapi.html">Polyglot Node Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module.html">Polyglot Methods and Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optional.html">Optional Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">Polyglot</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>Polyglot Virtual Node Server Framework</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="polyglot-virtual-node-server-framework">
+<h1>Polyglot Virtual Node Server Framework<a class="headerlink" href="#polyglot-virtual-node-server-framework" title="Permalink to this headline">¶</a></h1>
+<p>Polyglot Virtual Node Server Framework is an application that makes it easy and
+quick to both develop and maintain virtual node servers for the ISY-994i home
+automation controller by Universal Devices Inc. Using virtual node servers, the
+ISY-994i is able to communicate with and control third-party devices to which
+the ISY-994i cannot natively connect.</p>
+<p>Polyglot is written primarily with Python 2.7 and makes it easy
+to develop new Virtual Node Servers with Python 2.7. It should, however, by
+noted, that Virtual Node Servers may by developed using any language. Polyglot
+is intended to be run on a Raspberry Pi 2 Model B, but could potentially run on
+any ARM based machine running Linux with Python 2.7. FreeBSD, OSX, and x64 linux
+binaries are provided as well.</p>
+<p>This document will document the usage of and development for Polyglot. For
+additional help, please reference the <a class="reference external" href="http://forum.universal-devices.com/forum/111-polyglot/">UDI Forum</a>.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#user-interface">User Interface</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nsdev.html">Node Server Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="nsdev.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsdev.html#file-structure">File Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsdev.html#server-metadata">Server Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsdev.html#python-development">Python Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsdev.html#python-polyglot-library">Python Polyglot Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsdev.html#mqtt">MQTT</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nsexample.html">Python Node Server Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="nsexample.html#node-type-definition">Node Type Definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsexample.html#node-server-creation">Node Server Creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsexample.html#starting-the-node-server">Starting the Node Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsexample.html#installing-the-node-server">Installing the Node Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsexample.html#custom-node-server-configuration-file">Custom Node Server Configuration File</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nsapi.html">Polyglot Node Server API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="nsapi.html#general-format">General Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsapi.html#node-server-stdin-polyglot-to-node-server">Node Server STDIN - Polyglot to Node Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsapi.html#node-server-stdout-node-server-to-polyglot">Node Server STDOUT - Node Server to Polyglot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsapi.html#node-server-stderr-node-server-to-polyglot">Node Server STDERR - Node Server to Polyglot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module.html">Polyglot Methods and Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module.html#module">Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="optional.html">Optional Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="optional.html#docker">Docker</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id1">0.0.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id2">0.0.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id3">0.0.4</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Universal Devices Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.6',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,951 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>polyglot.nodeserver_manager &mdash; Polyglot 0.0.6 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Polyglot 0.0.6 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Polyglot
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nsdev.html">Node Server Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nsexample.html">Python Node Server Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nsapi.html">Polyglot Node Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module.html">Polyglot Methods and Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../optional.html">Optional Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Polyglot</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>polyglot.nodeserver_manager</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for polyglot.nodeserver_manager</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39; The element management module for Polyglot &#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">polyglot</span> <span class="kn">import</span> <span class="n">SOURCE_DIR</span>
+<span class="kn">from</span> <span class="nn">polyglot.utils</span> <span class="kn">import</span> <span class="n">AsyncFileReader</span><span class="p">,</span> <span class="n">Queue</span><span class="p">,</span> <span class="n">Empty</span><span class="p">,</span> <span class="n">MyProcessLookupError</span>
+<span class="kn">from</span> <span class="nn">polyglot.version</span> <span class="kn">import</span> <span class="n">PGVERSION</span>
+<span class="kn">import</span> <span class="nn">polyglot.nodeserver_helpers</span> <span class="kn">as</span> <span class="nn">helpers</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="c1"># import the paho.mqtt.client</span>
+<span class="n">MQTT</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">paho.mqtt.client</span> <span class="kn">as</span> <span class="nn">mqtt</span>
+    <span class="n">MQTT</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Interface was mqtt however paho.mqtt.client module not found.&#39;</span><span class="p">)</span>
+
+<span class="n">ELEMENT</span> <span class="o">=</span> <span class="s1">&#39;core&#39;</span>
+<span class="n">SERVER_TYPES</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;python&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">],</span>
+                <span class="s1">&#39;node&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;/usr/bin/node&#39;</span><span class="p">]}</span>
+<span class="n">NS_QUIT_WAIT_TIME</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># Global manager diagnostics/performance data structures</span>
+<span class="n">NSLOCK</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+<span class="n">NSMGR</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">NSSTATS</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># Increment this version number each time a breaking change is made or a</span>
+<span class="c1"># major new message (feature) is added to the API between the node server</span>
+<span class="c1"># manager (implemented by this source file) and its clients.</span>
+<span class="c1"># This allows the client an opportunity to adjust its behavior to suit the</span>
+<span class="c1"># installed version of Polyglot -- keep in mind that the client node server</span>
+<span class="c1"># is independent of Polyglot, and may not even be implemented in Python --</span>
+<span class="c1"># and thus has no other way to know about the Polyglot server itself.</span>
+<span class="n">PGAPIVER</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+
+<div class="viewcode-block" id="NodeServerManager"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServerManager">[docs]</a><span class="k">class</span> <span class="nc">NodeServerManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Node Server Manager</span>
+
+<span class="sd">    :param pglot: The parent Polyglot object</span>
+
+<span class="sd">    :ivar pglot: The parent Polyglot object</span>
+<span class="sd">    :ivar servers: Dictionary of active Node Servers</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">servers</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pglot</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span> <span class="o">=</span> <span class="n">pglot</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get server by base name. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Node Server configuration block. &quot;&quot;&quot;</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">nsbase_url</span><span class="p">,</span> <span class="n">nodeserver</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;platform&#39;</span><span class="p">:</span> <span class="n">nodeserver</span><span class="o">.</span><span class="n">platform</span><span class="p">,</span>
+                           <span class="s1">&#39;url_base&#39;</span><span class="p">:</span> <span class="n">nsbase_url</span><span class="p">,</span>
+                           <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">nodeserver</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                           <span class="s1">&#39;profile_number&#39;</span><span class="p">:</span> <span class="n">nodeserver</span><span class="o">.</span><span class="n">profile_number</span><span class="p">,</span>
+                           <span class="s1">&#39;config&#39;</span><span class="p">:</span> <span class="n">nodeserver</span><span class="o">.</span><span class="n">config</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">output</span>
+
+<div class="viewcode-block" id="NodeServerManager.start_server"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServerManager.start_server">[docs]</a>    <span class="k">def</span> <span class="nf">start_server</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ns_platform</span><span class="p">,</span> <span class="n">profile_number</span><span class="p">,</span> <span class="n">nsname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                     <span class="n">config</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; starts a node server &quot;&quot;&quot;</span>
+        <span class="c1"># pylint: disable=broad-except</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Starting Node Server: </span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">ns_platform</span><span class="p">,</span> <span class="n">nsname</span><span class="p">)</span>
+        <span class="c1"># find node server</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">helpers</span><span class="o">.</span><span class="n">get_path</span><span class="p">(</span><span class="n">ns_platform</span><span class="p">)</span>
+        <span class="n">interface</span><span class="p">,</span> <span class="n">mqtt_server</span><span class="p">,</span> <span class="n">mqtt_port</span> <span class="o">=</span> <span class="p">(</span><span class="bp">None</span><span class="p">,)</span><span class="o">*</span><span class="mi">3</span>
+        <span class="c1"># read node server attributes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">def_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;server.json&#39;</span><span class="p">)</span>
+            <span class="n">definition</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">def_file</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Error reading server.json for {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+        <span class="c1"># parse server attributes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">nstype</span> <span class="o">=</span> <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+            <span class="n">nsexe</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;executable&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;server.json for {} is missing type or executable.&quot;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ns_platform</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">configfile</span> <span class="o">=</span> <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;configfile&#39;</span><span class="p">]</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Config file option found in server.json: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">configfile</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Config file option not found in server.json&#39;</span><span class="p">)</span>
+            <span class="n">configfile</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">interface</span> <span class="o">=</span> <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;interface&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">interface</span> <span class="o">!=</span> <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> 
+                <span class="n">interface</span> <span class="o">=</span> <span class="s1">&#39;Default&#39;</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using interface type &#39;</span> <span class="o">+</span> <span class="n">interface</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mqtt_server</span> <span class="o">=</span> <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;mqtt_server&#39;</span><span class="p">]</span>
+                <span class="n">mqtt_port</span> <span class="o">=</span> <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;mqtt_port&#39;</span><span class="p">]</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using interface type &#39;</span> <span class="o">+</span> <span class="n">interface</span> <span class="o">+</span> <span class="s1">&#39; at &#39;</span> <span class="o">+</span> <span class="n">mqtt_server</span><span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">mqtt_port</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+            <span class="n">interface</span> <span class="o">=</span> <span class="s1">&#39;Default&#39;</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using interface type &#39;</span> <span class="o">+</span> <span class="n">interface</span><span class="p">)</span>
+
+        <span class="c1"># get server base name</span>
+        <span class="k">while</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span> <span class="ow">or</span> <span class="n">base</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">random_string</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="c1"># create sandbox</span>
+        <span class="n">sandbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">nodeserver_sandbox</span><span class="p">(</span><span class="n">ns_platform</span><span class="p">)</span>
+
+        <span class="c1"># create server</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="n">NodeServer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="p">,</span> <span class="n">ns_platform</span><span class="p">,</span> <span class="n">profile_number</span><span class="p">,</span>
+                                <span class="n">nstype</span><span class="p">,</span> <span class="n">nsexe</span><span class="p">,</span> <span class="n">nsname</span> <span class="ow">or</span> <span class="n">ns_platform</span><span class="p">,</span>
+                                <span class="n">config</span> <span class="ow">or</span> <span class="p">{},</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">configfile</span><span class="p">,</span>
+                                <span class="n">interface</span><span class="p">,</span> <span class="n">mqtt_server</span><span class="p">,</span> <span class="n">mqtt_port</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Node Server </span><span class="si">%s</span><span class="s1"> could not start&#39;</span><span class="p">,</span> <span class="n">ns_platform</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Error starting Node Server: {}.&quot;</span><span class="p">,</span> <span class="n">ns_platform</span><span class="p">)</span>
+
+        <span class="c1"># store server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="n">base</span><span class="p">]</span> <span class="o">=</span> <span class="n">server</span>
+        <span class="k">return</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="NodeServerManager.load"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServerManager.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initial load of the active Node Servers &quot;&quot;&quot;</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading Node Servers&#39;</span><span class="p">)</span>
+
+        <span class="n">nsconfigs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nodeservers&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">for</span> <span class="n">count</span><span class="p">,</span> <span class="n">nsconfig</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nsconfigs</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">ns_platform</span> <span class="o">=</span> <span class="n">nsconfig</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;platform&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">profile_number</span> <span class="o">=</span> <span class="n">nsconfig</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;profile_number&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">url_base</span> <span class="o">=</span> <span class="n">nsconfig</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;url_base&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">nsconfig</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">ns_platform</span><span class="p">)</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">nsconfig</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="p">{})</span>
+
+            <span class="k">if</span> <span class="bp">None</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ns_platform</span><span class="p">,</span> <span class="n">profile_number</span><span class="p">]:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s1">&#39;Bad Node Server configuration in config file. &#39;</span> <span class="o">+</span>
+                    <span class="s1">&#39;Node Server </span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">start_server</span><span class="p">(</span>
+                        <span class="n">ns_platform</span><span class="p">,</span> <span class="n">profile_number</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">url_base</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="NodeServerManager.delete"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServerManager.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove a server from Polyglot. &quot;&quot;&quot;</span>
+        <span class="n">node_server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="n">base_url</span><span class="p">]</span>
+        <span class="n">node_server</span><span class="o">.</span><span class="n">send_exit</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">node_server</span><span class="o">.</span><span class="n">alive</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">node_server</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="n">base_url</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="NodeServerManager.unload"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServerManager.unload">[docs]</a>    <span class="k">def</span> <span class="nf">unload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Unload all node servers &quot;&quot;&quot;</span>
+        <span class="c1"># request node server shutdowns</span>
+        <span class="k">for</span> <span class="n">node_server</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">node_server</span><span class="o">.</span><span class="n">send_exit</span><span class="p">()</span>
+
+        <span class="c1"># wait for node servers to quit gracefully</span>
+        <span class="n">ns_running</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">node_server</span><span class="o">.</span><span class="n">alive</span>
+                          <span class="k">for</span> <span class="n">node_server</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        <span class="n">timer</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">ns_running</span> <span class="ow">and</span> <span class="n">timer</span> <span class="o">&lt;</span> <span class="n">NS_QUIT_WAIT_TIME</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">timer</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">ns_running</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">node_server</span><span class="o">.</span><span class="n">alive</span>
+                              <span class="k">for</span> <span class="n">node_server</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+
+        <span class="c1"># kill any remaining node servers</span>
+        <span class="k">for</span> <span class="n">node_server</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">servers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">node_server</span><span class="o">.</span><span class="n">alive</span><span class="p">:</span>
+                <span class="n">node_server</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s1">&#39;Timed out waiting for Node Server </span><span class="si">%s</span><span class="s1"> to quit. &#39;</span> <span class="o">+</span>
+                    <span class="s1">&#39;Terminated Node Server.&#39;</span><span class="p">,</span> <span class="n">node_server</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Unloaded Node Servers&#39;</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="NodeServer"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer">[docs]</a><span class="k">class</span> <span class="nc">NodeServer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Node Server Class &quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=too-many-instance-attributes</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pglot</span><span class="p">,</span> <span class="n">ns_platform</span><span class="p">,</span> <span class="n">profile_number</span><span class="p">,</span> <span class="n">nstype</span><span class="p">,</span> <span class="n">nsexe</span><span class="p">,</span>
+                 <span class="n">nsname</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">configfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">mqtt_server</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mqtt_port</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># build run command</span>
+        <span class="k">if</span> <span class="n">nstype</span> <span class="ow">in</span> <span class="n">SERVER_TYPES</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">SERVER_TYPES</span><span class="p">[</span><span class="n">nstype</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unrecognized server type </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">nstype</span><span class="p">,</span>
+                          <span class="n">ns_platform</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;bad server type&#39;</span><span class="p">)</span>
+        <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nsexe</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span> <span class="o">=</span> <span class="n">pglot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isy_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">isy_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configfile</span> <span class="o">=</span> <span class="n">configfile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cmd</span> <span class="o">=</span> <span class="n">cmd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">platform</span> <span class="o">=</span> <span class="n">ns_platform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span> <span class="o">=</span> <span class="n">profile_number</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">nstype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exe</span> <span class="o">=</span> <span class="n">nsexe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">nsexe</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">nsname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sandbox</span> <span class="o">=</span> <span class="n">sandbox</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">interface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mqtt_server</span> <span class="o">=</span> <span class="n">mqtt_server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mqtt_port</span> <span class="o">=</span> <span class="n">mqtt_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pgver</span> <span class="o">=</span>  <span class="n">PGVERSION</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pgapiver</span> <span class="o">=</span> <span class="n">PGAPIVER</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;isyver&#39;</span><span class="p">:</span>   <span class="bp">self</span><span class="o">.</span><span class="n">isy_version</span><span class="p">,</span>
+                       <span class="s1">&#39;sandbox&#39;</span><span class="p">:</span>  <span class="bp">self</span><span class="o">.</span><span class="n">sandbox</span><span class="p">,</span>
+                       <span class="s1">&#39;name&#39;</span><span class="p">:</span>     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                       <span class="s1">&#39;pgver&#39;</span><span class="p">:</span>    <span class="bp">self</span><span class="o">.</span><span class="n">pgver</span><span class="p">,</span>
+                       <span class="s1">&#39;pgapiver&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pgapiver</span><span class="p">,</span>
+                       <span class="s1">&#39;profile&#39;</span><span class="p">:</span>  <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span><span class="p">,</span>
+                       <span class="s1">&#39;configfile&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">configfile</span><span class="p">,</span>
+                       <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                       <span class="s1">&#39;interface&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+                       <span class="s1">&#39;mqtt_server&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mqtt_server</span><span class="p">,</span>
+                       <span class="s1">&#39;mqtt_port&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mqtt_port</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lastping</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lastpong</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c1"># define handlers</span>
+        <span class="n">isy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">isy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">report_node_status</span><span class="p">,</span>
+                          <span class="s1">&#39;command&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">report_command</span><span class="p">,</span>
+                          <span class="s1">&#39;add&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">node_add</span><span class="p">,</span>
+                          <span class="s1">&#39;change&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">node_change</span><span class="p">,</span>
+                          <span class="s1">&#39;remove&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">node_remove</span><span class="p">,</span>
+                          <span class="s1">&#39;restcall&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">restcall</span><span class="p">,</span>
+                          <span class="s1">&#39;request&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">report_request_status</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<div class="viewcode-block" id="NodeServer.start"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; start the node server &quot;&quot;&quot;</span>
+        <span class="c1"># start process</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cmd</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">bufsize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;PYTHONPATH&#39;</span><span class="p">:</span> <span class="n">SOURCE_DIR</span><span class="p">},</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sandbox</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span> <span class="o">=</span> <span class="n">proc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">4096</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lastping</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lastpong</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c1"># Create threads dictionary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Add &#39;stdout&#39; thread that attaches to STDOUT of nodeserver process with _recv_out</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[</span><span class="s1">&#39;stdout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">AsyncFileReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span>
+                                                  <span class="bp">self</span><span class="o">.</span><span class="n">_recv_out</span><span class="p">)</span>
+        <span class="c1"># Add &#39;stderr&#39; thread that attaches to STERR of nodeserver process with _recv_err</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[</span><span class="s1">&#39;stderr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">AsyncFileReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+                                                  <span class="bp">self</span><span class="o">.</span><span class="n">_recv_err</span><span class="p">)</span>
+        <span class="c1"># Add &#39;requests&#39; thread that attaches to REST inbound commands and daemonize it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[</span><span class="s1">&#39;requests&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_request_handler</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[</span><span class="s1">&#39;requests&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="c1"># Add &#39;stdin&#39; thread that attaches to STDIN of nodeserver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[</span><span class="s1">&#39;stdin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_send_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[</span><span class="s1">&#39;stdin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">thread</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="c1"># Check if MQTT interface is used for this nodeserver</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">==</span> <span class="s1">&#39;mqtt&#39;</span> <span class="ow">and</span> <span class="n">MQTT</span> <span class="o">==</span> <span class="bp">True</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            This sends the params and config over STDOUT before replacing it with the MQTT</span>
+<span class="sd">            subsystem. We do this so that the mqtt config from server.json is sent to the</span>
+<span class="sd">            nodeserver in the params message on startup and it can use those settings to</span>
+<span class="sd">            configure itself instead of requiring you to set it on that side as well.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_params</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_config</span><span class="p">()</span>
+            <span class="c1"># If the MQTT subsystem is not created, create it (first boot) else use the existing</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="o">=</span> <span class="n">mqttSubsystem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="c1"># If we aren&#39;t using MQTT</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1"># wait, then send config</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_params</span><span class="p">()</span>        
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_config</span><span class="p">()</span>
+
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Started Node Server: </span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1"> (</span><span class="si">%s</span><span class="s1">)&#39;</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">platform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.restart"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.restart">[docs]</a>    <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; restart the nodeserver &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_exit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">alive</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">definition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the server defintion from server.json &quot;&quot;&quot;</span>
+        <span class="n">def_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;server.json&#39;</span><span class="p">)</span>
+        <span class="n">instruct_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;instructions.txt&#39;</span><span class="p">)</span>
+        <span class="n">definition</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">def_file</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alive</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">responding</span>
+        <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;instructions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">instruct_file</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">definition</span><span class="p">[</span><span class="s1">&#39;profile_number&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span>
+
+        <span class="k">return</span> <span class="n">definition</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the profile.zip data. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;profile.zip&#39;</span><span class="p">),</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">alive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Indicates if the Node Server is running. &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">MyProcessLookupError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">responding</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Indicates if the Node Server is responding. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lastping</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1"># node server has not been pinged</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_ping</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lastping</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lastping</span> <span class="o">&gt;=</span> <span class="mi">30</span><span class="p">:</span>
+            <span class="c1"># If MQTT is not connected, assume we are trying to reconnect and don&#39;t send a ping</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span><span class="o">.</span><span class="n">connected</span> <span class="o">==</span> <span class="bp">False</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span> <span class="o">==</span> <span class="bp">False</span><span class="p">):</span> <span class="k">return</span> <span class="bp">True</span>
+            <span class="c1"># last ping has expired (more than 30 seconds old)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lastpong</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lastpong</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lastping</span><span class="p">:</span>
+                <span class="c1"># pong was received</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_lastping</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send_ping</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># pong was not received</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lastpong</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Node Server </span><span class="si">%s</span><span class="s1">: time since last pong: </span><span class="si">%5.2f</span><span class="s1">&#39;</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lastpong</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Node Server </span><span class="si">%s</span><span class="s1">: Never received a pong response.&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># ping hasn&#39;t expired, we have to assume responding</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="c1"># manage IO</span>
+    <span class="k">def</span> <span class="nf">_send_in</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write pending input to node server.</span>
+<span class="sd">        Kill process if unresponsive.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># try to get a line from the queue</span>
+                    <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">Empty</span><span class="p">:</span>
+                    <span class="c1"># no line in queue, check if the Node Server is responding</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">responding</span><span class="p">:</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="s1">&#39;Node Server </span><span class="si">%s</span><span class="s1"> has stopped responding.&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span> <span class="o">=</span> <span class="bp">None</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="o">=</span> <span class="bp">None</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="c1"># found line, try to write it</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                        <span class="c1"># stdin pipe is broken. process is likely dead.</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="s1">&#39;Node Server </span><span class="si">%s</span><span class="s1"> has exited unexpectedly.&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span> <span class="o">=</span> <span class="bp">None</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="o">=</span> <span class="bp">None</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># line wrote successfully</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> STDIN: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="k">while</span> <span class="bp">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">responding</span><span class="p">:</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="s1">&#39;Node Server </span><span class="si">%s</span><span class="s1"> has stopped responding.&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="o">=</span> <span class="bp">None</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="o">=</span> <span class="bp">None</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_send_in</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_request_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read and process network requests for a node server</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="p">:</span>
+
+            <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="c1"># parse message</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">arguments</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[</span><span class="n">command</span><span class="p">]</span>
+
+            <span class="n">seq</span> <span class="o">=</span> <span class="n">arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;seq&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">ts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> [</span><span class="si">%d</span><span class="s1">] (</span><span class="si">%5.2f</span><span class="s1">) _request_handler: command=</span><span class="si">%s</span><span class="s1"> seq=</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                          <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="o">.</span><span class="n">qsize</span><span class="p">()),</span>
+                          <span class="mf">0.0</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">seq</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">seq</span><span class="p">))</span>
+
+            <span class="n">fun</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fun</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span><span class="p">,</span> <span class="o">**</span><span class="n">arguments</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">seq</span> <span class="ow">and</span> <span class="n">result</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;result&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">result</span><span class="p">)</span>
+
+            <span class="c1"># Signal that this is handled</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> [</span><span class="si">%d</span><span class="s1">] (</span><span class="si">%5.2f</span><span class="s1">) _request_handler: completed.&#39;</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                          <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="o">.</span><span class="n">qsize</span><span class="p">()),</span>
+                          <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">ts</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_recv_out</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Process the output of the nodeserver </span>
+<span class="sd">        (Called from STDOUT or from message receive in MQTT) </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">type</span> <span class="o">=</span> <span class="s1">&#39;STDOUT&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="s1">&#39;MQTT&#39;</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">(</span><span class="n">line</span><span class="p">[:</span><span class="mi">57</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;...&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">60</span> <span class="k">else</span> <span class="n">line</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> [</span><span class="si">%d</span><span class="s1">] (</span><span class="si">%5.2f</span><span class="s1">) </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                      <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="o">.</span><span class="n">qsize</span><span class="p">()),</span>
+                      <span class="mf">0.0</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># parse message</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">arguments</span> <span class="o">=</span> <span class="n">message</span><span class="p">[</span><span class="n">command</span><span class="p">]</span>
+
+        <span class="c1"># direct command</span>
+        <span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;pong&#39;</span><span class="p">:</span>
+            <span class="c1"># store pong time</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lastpong</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;config&#39;</span><span class="p">:</span>
+            <span class="c1"># store new configuration in config file</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">arguments</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">update_config</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;install&#39;</span><span class="p">:</span>
+            <span class="c1"># install node server on isy</span>
+            <span class="c1"># [future] implement when documentation is available</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Install command is not yet supported.&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;manager&#39;</span><span class="p">:</span>
+            <span class="k">global</span> <span class="n">NSLOCK</span><span class="p">,</span> <span class="n">NSMGR</span><span class="p">,</span> <span class="n">NSSTATS</span>
+            <span class="c1"># Special management node server operations</span>
+            <span class="n">op</span> <span class="o">=</span> <span class="n">arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;IAmManager&#39;</span><span class="p">:</span>
+                <span class="n">NSLOCK</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+                <span class="n">NSMGR</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span>
+                <span class="n">NSSTATS</span><span class="p">[</span><span class="s1">&#39;manager&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">NSMGR</span>
+                <span class="n">NSLOCK</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;ClearStatistics&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span> <span class="o">==</span> <span class="n">NSMGR</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> manager request: ClearStatistics&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">isy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">isy</span>
+                    <span class="n">isy</span><span class="o">.</span><span class="n">get_stats</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> manager request refused: {}&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;IsyHasRestarted&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span> <span class="o">==</span> <span class="n">NSMGR</span><span class="p">:</span>
+                    <span class="c1"># [TODO] send restart message to all other node server queues</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> reports that ISY has restarted&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> manager request refused: {}&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> manager op not implemented: {}&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;statistics&#39;</span><span class="p">:</span>
+            <span class="c1"># manage Polyglot and network communications stats</span>
+            <span class="n">isy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">isy</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;to_isy&#39;</span><span class="p">:</span> <span class="n">isy</span><span class="o">.</span><span class="n">get_stats</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span><span class="p">,</span> <span class="o">**</span><span class="n">arguments</span><span class="p">)}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span> <span class="o">==</span> <span class="n">NSMGR</span><span class="p">:</span>
+                <span class="c1"># TODO: may need to take NSLOCK here to avoid partial updates</span>
+                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;ns&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">NSSTATS</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;statistics&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;exit&#39;</span><span class="p">:</span>
+            <span class="c1"># node server is done. Kill it. Clean up is automatic.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;connected&#39;</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> current status is connected to the broker.&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_ping</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s1">&#39;disconnected&#39;</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> current status is disconnected from the broker.&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fun</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fun</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Node Server </span><span class="si">%s</span><span class="s1"> delivered bad command </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">command</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%8s</span><span class="s1"> [</span><span class="si">%d</span><span class="s1">] (</span><span class="si">%5.2f</span><span class="s1">)   Done: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                      <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rqq</span><span class="o">.</span><span class="n">qsize</span><span class="p">()),</span>
+                      <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">ts</span><span class="p">),</span> <span class="n">l</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_recv_err</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process STDERR from nodeserver</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;**INFO: &#39;</span><span class="p">):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;**DEBUG: &#39;</span><span class="p">):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;**WARNING: &#39;</span><span class="p">):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_mk_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd_code</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Process Output TO the nodeserver (MQTT/STDIN) &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="n">cmd_code</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">})</span>
+        <span class="c1"># If using mqtt, send the msg to the nodeserver over that mechanism if it is connected</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mqtt</span><span class="o">.</span><span class="n">topicOutput</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> MQTT Publish: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+        <span class="c1"># Else add the msg to the STDIN queue to send to the nodeserver processed by _send_in</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inq</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NodeServer.send_config"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_config">[docs]</a>    <span class="k">def</span> <span class="nf">send_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send configuration to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_params"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_params">[docs]</a>    <span class="k">def</span> <span class="nf">send_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send parameters to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_install"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_install">[docs]</a>    <span class="k">def</span> <span class="nf">send_install</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile_number</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send install command to Node Server. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">profile_number</span><span class="p">:</span>
+            <span class="n">profile_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span> <span class="o">=</span> <span class="n">profile_number</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pglot</span><span class="o">.</span><span class="n">update_config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;install&#39;</span><span class="p">,</span> <span class="n">profile_number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_number</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_query"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_query">[docs]</a>    <span class="k">def</span> <span class="nf">send_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">,</span> <span class="n">request_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send query command to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;query&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">,</span> <span class="n">request_id</span><span class="o">=</span><span class="n">request_id</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_status"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_status">[docs]</a>    <span class="k">def</span> <span class="nf">send_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">,</span> <span class="n">request_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send status request to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">,</span>
+                     <span class="n">request_id</span><span class="o">=</span><span class="n">request_id</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_addall"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_addall">[docs]</a>    <span class="k">def</span> <span class="nf">send_addall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send add all request to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;add_all&#39;</span><span class="p">,</span> <span class="n">request_id</span><span class="o">=</span><span class="n">request_id</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_added"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_added">[docs]</a>    <span class="k">def</span> <span class="nf">send_added</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">,</span> <span class="n">node_def_id</span><span class="p">,</span>
+                   <span class="n">primary_node_address</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send node added confirmation to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;added&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">,</span>
+                     <span class="n">node_def_id</span><span class="o">=</span><span class="n">node_def_id</span><span class="p">,</span>
+                     <span class="n">primary_node_address</span><span class="o">=</span><span class="n">primary_node_address</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_removed"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_removed">[docs]</a>    <span class="k">def</span> <span class="nf">send_removed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send node removed confirmation to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;removed&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_renamed"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_renamed">[docs]</a>    <span class="k">def</span> <span class="nf">send_renamed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send node renamed confirmation to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;renamed&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_enabled"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_enabled">[docs]</a>    <span class="k">def</span> <span class="nf">send_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send node enabled confirmation to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;enabled&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_disabled"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_disabled">[docs]</a>    <span class="k">def</span> <span class="nf">send_disabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send node disabled confirmation to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;disabled&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_cmd"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_address</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">uom</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">request_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send run command signal to Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;cmd&#39;</span><span class="p">,</span> <span class="n">node_address</span><span class="o">=</span><span class="n">node_address</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">command</span><span class="p">,</span>
+                     <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">uom</span><span class="o">=</span><span class="n">uom</span><span class="p">,</span> <span class="n">request_id</span><span class="o">=</span><span class="n">request_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_ping"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_ping">[docs]</a>    <span class="k">def</span> <span class="nf">send_ping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send Ping request to the Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;ping&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="NodeServer.send_exit"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.send_exit">[docs]</a>    <span class="k">def</span> <span class="nf">send_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send exit command to the Node Server. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_cmd</span><span class="p">(</span><span class="s1">&#39;exit&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_connected</span> <span class="o">=</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="NodeServer.kill"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.NodeServer.kill">[docs]</a>    <span class="k">def</span> <span class="nf">kill</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Kill the node server process. &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="n">MyProcessLookupError</span><span class="p">:</span>
+            <span class="k">pass</span>
+</div></div>
+<div class="viewcode-block" id="mqttSubsystem"><a class="viewcode-back" href="../../nsdev.html#polyglot.nodeserver_manager.mqttSubsystem">[docs]</a><span class="k">class</span> <span class="nc">mqttSubsystem</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topicOutput</span> <span class="o">=</span> <span class="s1">&#39;udi/polyglot/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;/node&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topicInput</span> <span class="o">=</span> <span class="s1">&#39;udi/polyglot/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;/poly&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span> <span class="o">=</span> <span class="n">mqtt</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;-poly&quot;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">will_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topicOutput</span><span class="p">,</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;disconnected&quot;</span><span class="p">:</span> <span class="p">{}}),</span> <span class="n">retain</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">on_connect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">on_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">on_subscribe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subscribe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">on_disconnect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disconnect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">on_publish</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publish</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">on_log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mqtt_server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mqtt_port</span>
+    
+    <span class="c1"># The callback for when the client receives a CONNACK response from the server.</span>
+    <span class="k">def</span> <span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mqttc</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="c1"># Subscribing in on_connect() means that if we lose the connection and</span>
+        <span class="c1"># reconnect then subscriptions will be renewed.</span>
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MQTT Connected with result code &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; (Success)&quot;</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">,</span> <span class="n">mid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topicInput</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MQTT Subscribing to topic: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">topicInput</span> <span class="o">+</span> <span class="s2">&quot; - &quot;</span> <span class="o">+</span> <span class="s2">&quot; MID: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; Result: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MQTT Subscription to &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">topicInput</span> <span class="o">+</span> <span class="s2">&quot; failed. This is unusual. MID: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; Result: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+                <span class="c1"># If subscription fails, try to reconnect.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;MQTT Failed to connect. Result code: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rc</span><span class="p">))</span>
+        
+    <span class="c1"># The callback for when a PUBLISH message is received from the server.</span>
+    <span class="k">def</span> <span class="nf">_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mqttc</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="c1">#_LOGGER.info(&#39;MQTT Received Message: &#39; + msg.topic + &quot;: QoS: &quot; + str(msg.qos) + &quot;: &quot; + str(msg.payload))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_recv_out</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+
+    <span class="c1"># The callback for when a DISCONNECT occurs.    </span>
+    <span class="k">def</span> <span class="nf">_disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mqttc</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MQTT Unexpected disconnection. Trying reconnect1.&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;An exception of type {0} occured. Arguments:</span><span class="se">\n</span><span class="s2">{1!r}&quot;</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">ex</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;MQTT Connection error: &quot;</span> <span class="o">+</span> <span class="n">message</span><span class="p">)</span>                
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MQTT Graceful disconnection.&quot;</span><span class="p">)</span>
+            
+    <span class="k">def</span> <span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mqttc</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="c1"># Use for debugging MQTT Packets, disable for normal use, NOISY.</span>
+        <span class="c1">#_LOGGER.info(&#39;MQTT Log - &#39; + str(level) + &#39;: &#39; + str(string))</span>
+        <span class="k">pass</span>
+            
+    <span class="k">def</span> <span class="nf">_subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mqttc</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">granted_qos</span><span class="p">):</span>
+        <span class="c1">#_LOGGER.info(&quot;MQTT Subscribed Succesfully for Message ID: &quot; + str(mid) + &quot; - QoS: &quot; + str(granted_qos))</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mqttc</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">mid</span><span class="p">):</span>
+        <span class="c1">#_LOGGER.info(&quot;MQTT Published message ID: &quot; + str(mid))</span>
+        <span class="k">pass</span>
+        
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Connecting to MQTT... &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">loop_start</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topicOutput</span><span class="p">,</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;connected&quot;</span><span class="p">:</span> <span class="p">{}}),</span> <span class="n">retain</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;An exception of type {0} occured. Arguments:</span><span class="se">\n</span><span class="s2">{1!r}&quot;</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">ex</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;MQTT Connection error: &quot;</span> <span class="o">+</span> <span class="n">message</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Disconnecting from MQTT... &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topicOutput</span><span class="p">,</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;disconnected&quot;</span><span class="p">:</span> <span class="p">{}}),</span> <span class="n">retain</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">loop_stop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqttc</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+   </div>
+<div class="viewcode-block" id="random_string"><a class="viewcode-back" href="../../module.html#polyglot.nodeserver_manager.random_string">[docs]</a><span class="k">def</span> <span class="nf">random_string</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Generate a random string of uppercase, lowercase, and digits &quot;&quot;&quot;</span>
+    <span class="n">library</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_uppercase</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">library</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Universal Devices Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.0.6',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

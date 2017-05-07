@@ -1,0 +1,394 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Polyglot Node Server API &mdash; Polyglot 0.0.6 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Polyglot 0.0.6 documentation" href="index.html"/>
+        <link rel="next" title="Polyglot Methods and Classes" href="module.html"/>
+        <link rel="prev" title="Python Node Server Example" href="nsexample.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Polyglot
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsdev.html">Node Server Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsexample.html">Python Node Server Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Polyglot Node Server API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#general-format">General Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#node-server-stdin-polyglot-to-node-server">Node Server STDIN - Polyglot to Node Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#node-server-stdout-node-server-to-polyglot">Node Server STDOUT - Node Server to Polyglot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#node-server-stderr-node-server-to-polyglot">Node Server STDERR - Node Server to Polyglot</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module.html">Polyglot Methods and Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optional.html">Optional Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Polyglot</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Polyglot Node Server API</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/nsapi.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="polyglot-node-server-api">
+<h1>Polyglot Node Server API<a class="headerlink" href="#polyglot-node-server-api" title="Permalink to this headline">¶</a></h1>
+<p>Documented here is the JSON API used for communication between Polyglot and the
+Node Server processes. This API will never be referenced directly by either by
+an end user and will rarely be referenced by a developer. It is documented here
+for continuity. Nearly each command and its arguments maps to a command and
+arguments specified in the ISY Virtual Node Server API documentation. The only
+exceptions are the additions of some commands necessary for Polyglot&#8217;s
+operation.</p>
+<div class="section" id="general-format">
+<h2>General Format<a class="headerlink" href="#general-format" title="Permalink to this headline">¶</a></h2>
+<p>In general, each API message is formatted as such:</p>
+<div class="highlight-json"><div class="highlight"><pre><span></span>{COMMAND: {ARG_NAME_1: ARG_VALUE_1, ..., ARG_NAME_N: ARG_VALUE_N}}
+</pre></div>
+</div>
+<p>All of the arguments are named. Each message ends with a new line and will
+contain no new lines. Each message will contain only one command. Never will
+multiple command be sent in the same message.</p>
+</div>
+<div class="section" id="node-server-stdin-polyglot-to-node-server">
+<h2>Node Server STDIN - Polyglot to Node Server<a class="headerlink" href="#node-server-stdin-polyglot-to-node-server" title="Permalink to this headline">¶</a></h2>
+<p>The following messages may be sent from Polyglot to the Node Server to trigger
+an action inside of the Node Server.</p>
+<ul>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;config&#8217;: {... arbitrary data saved by the node server ...}}</em></div>
+<div class="line">This command is the first one sent to the node server and is only sent
+once. The arguments dictionary will be of an arbitrary structure and will
+match what the Node Server had last saved.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;install&#8217;: {&#8216;profile_number&#8217;: ...}}</em></div>
+<div class="line">Instructs the node server to install itself with the specified
+<em>profile_number</em>.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8220;params&#8221;: {&#8220;profile&#8221;: 8, &#8220;pgver&#8221;: &#8220;0.0.4&#8221;, &#8220;name&#8221;: &#8220;nodeservername&#8221;, &#8220;pgapiver&#8221;: &#8220;1&#8221;, &#8220;sandbox&#8221;: &#8220;/home/Polyglot/config/nodeservername&#8221;, &#8220;configfile&#8221;: &#8220;config.yaml&#8221;, &#8220;interface&#8221;: &#8220;mqtt&#8221;, &#8220;path&#8221;: &#8220;/home/Polyglot/config/node_servers/nodeservername&#8221;, &#8220;isyver&#8221;: &#8220;5.0.4&#8221;, &#8220;mqtt_server&#8221;: &#8220;pi3&#8221;, &#8220;mqtt_port&#8221;: &#8220;1883&#8221;}}</em></div>
+<div class="line">Params passed back from Polyglot to the node server with info about the node server.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;query&#8217;: {&#8216;node_address&#8217;: ..., &#8216;request_id&#8217;: ...}}</em></div>
+<div class="line">Instructs the node server to query a node. <em>request_id</em> is optional.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;status&#8217;: {&#8216;node_address&#8217;: ..., &#8216;request_id&#8217;: ...}}</em></div>
+<div class="line">Requests the node server to send current node status to the ISY.
+<em>request_id</em> is optional.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;add_all&#8217;: {&#8216;request_id&#8217;: ...}}</em></div>
+<div class="line">Requests that the node server add all its nodes to the ISY.
+<em>request_id</em> is optional.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;added&#8217;: {&#8216;node_address&#8217;: ..., &#8216;node_def_id&#8217;: ..., &#8216;primary_node_address&#8217;: ..., &#8216;name&#8217;: ...}}</em></div>
+<div class="line">Indicates that the node has been added to the ISY.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;removed&#8217;: {&#8216;node_address&#8217;: ...}}</em></div>
+<div class="line">Indicates that the node has been removed from the ISY.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;renamed&#8217;: {&#8216;node_address&#8217;: ..., &#8216;name&#8217;: ...}}</em></div>
+<div class="line">Indicates that the node has been renamed in the ISY.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;enabled&#8217;: {&#8216;node_address&#8217;: ...}}</em></div>
+<div class="line">Indicates that the node has been enabled in the ISY.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;disabled&#8217;: {&#8216;node_address&#8217;: ...}}</em></div>
+<div class="line">Indicates that the node has been disabled in the ISY.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;cmd&#8217;: {&#8216;node_address&#8217;: ..., &#8216;command&#8217;: ..., *&#8217;value&#8217;: ...., *&#8217;uom&#8217;: ..., *&#8217;&lt;pn&gt;.&lt;uomn&gt;&#8217;: ..., *&#8217;request_id&#8217;: ...}}</em></div>
+<div class="line">Instructs the node server to run the specified command on the specified
+node. <em>value</em> and <em>uom</em> are optional and described the unnamed parameter.
+They will always appear together. <em>&lt;pn&gt;.&lt;uomn&gt;</em> will be repeated as
+necessary to described the unnamed parameters. They are also optional.
+<em>request_id</em> is optional.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;ping&#8217;: {}}</em></div>
+<div class="line">This is a command from Polyglot requesting a Pong response. This is handled
+in the PolyglotConnector class.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;exit&#8217;: {}}</em></div>
+<div class="line">This command is Polyglot instructing the node server to cleanly shut down.</div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="node-server-stdout-node-server-to-polyglot">
+<h2>Node Server STDOUT - Node Server to Polyglot<a class="headerlink" href="#node-server-stdout-node-server-to-polyglot" title="Permalink to this headline">¶</a></h2>
+<p>The following messages are accepted by Polyglot from the Node Server and will
+typically instruct Polyglot to send a response upstream to the ISY.</p>
+<ul>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;config&#8217;: {... arbitrary data saved by the node server ...}}</em></div>
+<div class="line">Sends configuration data to Polyglot to be saved. This data will be sent
+back to the Node Server, exactly as it has been sent to Polyglot, the next
+time the Node Server is started.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;install&#8217;: {}}</em></div>
+<div class="line">Install the node server on the ISY. This has not been implemented yet.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;status&#8217;: {&#8216;node_address&#8217;: ..., &#8216;driver_control&#8217;: ..., &#8216;value&#8217;: ..., &#8216;uom&#8217;: ...}}</em></div>
+<div class="line">Reports a node&#8217;s driver status.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;command&#8217;: {&#8216;node_address&#8217;: ..., &#8216;command&#8217;, ..., &#8216;value&#8217;: ...., &#8216;uom&#8217;: ..., &#8216;&lt;pn&gt;.&lt;uomn&gt;&#8217;: ...}}</em></div>
+<div class="line">Reports that a command has been run on a node. <em>value</em> and <em>uom</em> are
+optional and described the unnamed parameter. They will always appear
+together. <em>&lt;pn&gt;.&lt;uomn&gt;</em> will be repeated as necessary to described the
+unnamed parameters. They are also optional.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;add&#8217;: {&#8216;node_address&#8217;: ..., &#8216;node_def_id&#8217;: ..., &#8216;primary&#8217;: ..., &#8216;name&#8217;: ...}}</em></div>
+<div class="line">Adds a node to the ISY.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;change&#8217;: {&#8216;node_address&#8217;: ..., &#8216;node_def_id&#8217;: ...}}</em></div>
+<div class="line">Changes the node&#8217;s definition in the ISY.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;remove&#8217;: {&#8216;node_address&#8217;: ...}}</em></div>
+<div class="line">Instructs the ISY to remove a node.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;request&#8217;: {&#8216;request_id&#8217;: ..., &#8216;result&#8217;: ...}}</em></div>
+<div class="line">Replies to the ISY indicating that a request has been finished either
+successfully or unsuccessfully. The result parameter must be a boolean
+indicating this.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;pong&#8217;: {}}</em></div>
+<div class="line">The proper response to a Ping command. Must be recieved within 30 seconds
+of a Ping command or Polyglot assumes the Node Server has stalled and
+kills it. This is handled automatically in the PolyglotConnector class.</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line"><em>{&#8216;exit&#8217;: {}}</em></div>
+<div class="line">Indicates to Polyglot that the node server has exited and is now closing.
+This is the last message sent from a node server. All messages following
+this will be ignored. It is not guaranteed that the node server process
+will continue to run after this command is sent.</div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="node-server-stderr-node-server-to-polyglot">
+<h2>Node Server STDERR - Node Server to Polyglot<a class="headerlink" href="#node-server-stderr-node-server-to-polyglot" title="Permalink to this headline">¶</a></h2>
+<p>STDERR messages have no structured formatting, they are free flowing text.
+Anything recieved by Polyglot through this stream will not be processed and
+will be immediately logged as an error. Do not send personal information in
+error messages as they will always be logged regardless of the log verbosity.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="module.html" class="btn btn-neutral float-right" title="Polyglot Methods and Classes" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="nsexample.html" class="btn btn-neutral" title="Python Node Server Example" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Universal Devices Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.6',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
