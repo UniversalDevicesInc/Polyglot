@@ -66,7 +66,17 @@
 
   <template>
 
-    <!-- AJAX Requests -->
+  <!-- AJAX Requests -->
+    <iron-ajax 
+	  auto
+	  id="GetVersion"
+      url="/api/config"
+      handle-as="json"
+      on-response="_getConfig"
+	  last-response="{{config}}
+      withCredentials="true">
+	</iron-ajax>
+	  
     <iron-ajax id="GetServers"
       url="/api/servers/active"
       handle-as="json"
@@ -114,14 +124,19 @@
     </div>
 	
 	<div id="version" align="center">
-	Version 0.0.7
+		Version {{config.pgver}}
 	</div>
+
 
   </template>
 
   <script>
     Polymer({
       is: "sidebar-list",
+	  
+	  observers: [
+		'_getConfig()'
+	  ],
 
       properties: {
         node_servers: {
@@ -129,7 +144,7 @@
           value: [],
         },
       },
-
+	  
       attched: function() {
         this.refresh();
       },
@@ -137,16 +152,22 @@
       refresh: function() {
         document.querySelector("#GetServers").generateRequest();
       },
-
+	  
       _refreshServers: function() {
         response = document.querySelector("#GetServers").lastResponse;
-
         if (response && response.success) {
           if (Object.prototype.toString.call(response.payload) === "[object Array]") {
             this.node_servers = response.payload;
           } else {
             this.node_servers = [];
           }
+        }
+      },
+
+      _getConfig: function() {
+        response = document.querySelector("#GetVersion").lastResponse;
+        if (response && response.success) {
+          this.config = response.payload;
         }
       },
 
@@ -164,7 +185,7 @@
         window.contents.base_url = target.getAttribute('data-id');
         window.drawerPanel.closeDrawer();
       },
-
+	  
       computeIcon: function(isRunning) {
         return isRunning ? 'check' : 'error';
       },
