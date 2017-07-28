@@ -345,7 +345,7 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
                 retry = True
             else:
                 diag = 'ERR'
-            if text_needed:
+                #if text_needed:
                 text = req.text
 
         except requests.Timeout:
@@ -382,6 +382,7 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
             retry = False
 
         # Log at the correct level depending on the status code
+        _LOGGER.info("TEXT=%s",text)
         logstr = 'ISY: [%d] (%5.2f) %3d %s: %s'
         if scode == 200:
             _LOGGER.info(logstr, retries, elapsed, scode, diag, url)
