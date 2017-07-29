@@ -916,6 +916,9 @@ class SimpleNodeServer(NodeServer):
         return True
 
     def _add_node_cb(self, na, status_code, **kwargs):
+        text = None
+        if kwargs is not None and 'text' in kwargs:
+            text = kwargs['text']
         if int(status_code) == 200:
             if na in self.nodes:
                 self.nodes[na].added = True
@@ -929,8 +932,8 @@ class SimpleNodeServer(NodeServer):
                     .format(na))
         else:
             self.smsg(
-                '**ERROR: node "{}": node add REST call to ISY failed: {}'
-                .format(na, status_code))
+                '**ERROR: node "{}": node add REST call to ISY failed: {} {}'
+                .format(na, status_code, text))
         return False
 
     def _enable_node(self, address):

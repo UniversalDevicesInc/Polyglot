@@ -8,6 +8,7 @@ import os
 import requests
 import time
 import threading
+import xml.etree.ElementTree as ET
 try:
     from urllib import quote, urlencode  # Python 2.x
 except ImportError:
