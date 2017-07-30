@@ -606,7 +606,7 @@ class NodeServer(object):
         self.running = False
         return True
 
-    def on_result(self, seq, status_code, elapsed, text, retries, **kwargs):
+    def on_result(self, seq, status_code, elapsed, text, retries, reason_code, **kwargs):
         """
         Handles a result message, which contains the result from a REST API
         call to the ISY.  The result message is uniquely identified by the
@@ -617,7 +617,7 @@ class NodeServer(object):
             return False
         func, args = self._seq_cb.pop(seq)
         return func(seq=seq, status_code=status_code, elapsed=elapsed,
-                    text=text, retries=retries, **args)
+                    text=text, retries=retries, reason_code=reason_code, **args)
 
     def register_result_cb(self, func, **kwargs):
         """
@@ -917,8 +917,12 @@ class SimpleNodeServer(NodeServer):
 
     def _add_node_cb(self, na, status_code, **kwargs):
         text = None
-        if kwargs is not None and 'text' in kwargs:
-            text = kwargs['text']
+        reason_code = None
+        if kwargs is not None:
+            if 'text' in kwargs:
+                text = kwargs['text']
+            if 'reason_code' in kwargs:
+                reason_code = kwargs['reason_code']
         if int(status_code) == 200:
             if na in self.nodes:
                 self.nodes[na].added = True
@@ -931,9 +935,16 @@ class SimpleNodeServer(NodeServer):
                     '**ERROR: node "{}": node added on ISY, but no longer exists.'
                     .format(na))
         else:
-            self.smsg(
-                '**ERROR: node "{}": node add REST call to ISY failed: {} {}'
-                .format(na, status_code, text))
+            if reason_code == "5004":
+                self.smsg(
+                    '**INFO: node "{}": node add REST call to ISY failed because already exists: {} {}'
+                    .format(na, status_code, text))
+                self.nodes[na].added = True
+                return True
+            else:
+                self.smsg(
+                    '**ERROR: node "{}": node add REST call to ISY failed reason code {}: {} {}'
+                    .format(na, reason_code, status_code, text))
         return False
 
     def _enable_node(self, address):
