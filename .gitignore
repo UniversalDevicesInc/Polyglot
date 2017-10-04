@@ -6,3 +6,4 @@ config
 *~
 ./.git
 .idea/
+.AppleDouble

@@ -159,8 +159,7 @@ def node_add(ns_profnum, node_address, node_def_id, primary, name,
     primary = add_node_prefix(ns_profnum, primary)
     url = make_url(ns_profnum, ['nodes', node_address, 'add', node_def_id],
                    {'primary': primary, 'name': name})
-    return request(ns_profnum, url, timeout, seq)
-
+    return request(ns_profnum, url, timeout=timeout, seq=seq, log_error=False)
 
 def node_change(ns_profnum, node_address, node_def_id,
                 timeout=None, seq=None):
@@ -225,6 +224,32 @@ def get_version():
             _LOGGER.error("No version information found on ISY.")
     return ver
 
+def parse_rest_response(text):
+    """
+    Parse the RestResponse xml
+    http://forum.universal-devices.com/topic/21646-node-server-rest-api-reason-codes-5010/
+    """
+    ret = { 'succeeded':False, 'status':None, 'reason':None}
+    if text is not None:
+        try:                   
+            root = ET.fromstring(text)
+            #print root.tag, root.attrib
+            if root.tag == "RestResponse":
+                if root.attrib['succeeded'] == "true":
+                    ret['succeeded'] = True
+    
+                for child in root:
+                    #print "tag='{}' att='{}' text='{}'".format(child.tag, child.attrib, child.text)
+                    if ( child.tag == 'RestResponse' ):
+                        ret['succeeded'] = child.attrib['succeeded']
+                    elif ( child.tag == 'status' ):
+                        ret['status'] = child.text
+                    elif ( child.tag == 'reason' ):
+                        ret['reason'] = child.attrib['code']
+        except ET.ParseError:
+            _LOGGER.error("Unable to parse rest response string: '{}'".format(text))
+    return ret
+
 def make_url(ns_profnum, path, path_args=None):
     '''
     Create a URL from the given path.
@@ -257,7 +282,7 @@ def restcall(ns_profnum, api, timeout=None, seq=None, noretry=False):
     return request(ns_profnum, url, timeout, seq, text_needed=True)
 
 def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
-            noretry=False):
+            noretry=False, log_error=True):
     '''
     Requests a URL from the ISY, returns response.
 
@@ -267,7 +292,8 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
     :param seq: optional, sequence number for reporting callback
     :param noretry: optional, True to disable retry attempts
     :param text_needed: optional, default = False
-
+    :param log_error: optional, default = True.  Set to false 
+    :                 when the caller will handle the error
     Returns a dictionary r containing:
         r.text:        response text     (string or None)
         r.seq:         sequence number   (string or None)
@@ -277,6 +303,7 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
             values < 100 are connection errors,
             values > 99 are standard HTTP status codes,
             value of 200 = success
+        r.reason_code: reason code       (integer)
     '''
     global SESSION
     _LOGGER.debug('ISY: Request: %s', url)
@@ -301,7 +328,9 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
 
     retries = 0
     retry = True
-
+    # Will contain rest response reason code
+    reason_code = 0
+    
     while retry:
 
         # Add a delay if we're retrying; use sane delays, though
@@ -337,6 +366,9 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
             # valid response - extract relevant information
             elapsed = (time.time() - ts)
             scode = req.status_code
+            text = req.text
+            rest_response = parse_rest_response(text)
+            reason_code = rest_response['reason']
             if scode == 200:
                 diag = 'OK'
             elif scode == 503:
@@ -344,9 +376,7 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
                 diag = 'BUSY'
                 retry = True
             else:
-                diag = 'ERR'
-            if text_needed:
-                text = req.text
+                diag = 'ERR code={}'.format(reason_code)
 
         except requests.Timeout:
             # Timeout is not retryable
@@ -388,7 +418,10 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
         elif retry:
             _LOGGER.warning(logstr, retries, elapsed, scode, diag, url)
         else:
-            _LOGGER.error(logstr, retries, elapsed, scode, diag, url)
+            if log_error:
+                _LOGGER.error(logstr, retries, elapsed, scode, diag, url)
+            else:
+                _LOGGER.info(logstr, retries, elapsed, scode, diag, url)
 
     # End of loop
 
@@ -415,7 +448,7 @@ def request(ns_profnum, url, timeout=None, seq=None, text_needed=False,
     SLOCK.release()
 
     return {'text': text, 'status_code': scode, 'seq': seq,
-            'elapsed': elapsed, 'retries': retries}
+            'elapsed': elapsed, 'retries': retries, 'reason_code': reason_code}
 
 
 def get_stats(ns_profnum, clear=False, **kwargs):
