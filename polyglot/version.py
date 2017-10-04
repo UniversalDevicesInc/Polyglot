@@ -1,4 +1,4 @@
 """
 Polyglot Version number
 """
-PGVERSION = "0.0.7"
+PGVERSION = "0.0.8"
